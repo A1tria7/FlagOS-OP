@@ -33,7 +33,11 @@ def empty_like_aten(self, *, dtype=None, layout=None, device=None,
                     pin_memory=None, memory_format=None):
     """aten::empty_like(Tensor self, *, ...) -> Tensor"""
     _bump()
-    from kernel.torch_level import empty_like_torch
+    # 包态优先、脚本态 fallback（多算子同进程执行，#25 review）
+    try:
+        from .kernel.torch_level import empty_like_torch
+    except ImportError:
+        from kernel.torch_level import empty_like_torch
     return empty_like_torch(self, dtype=dtype, layout=layout, device=device,
                             pin_memory=pin_memory,
                             memory_format=memory_format)
@@ -56,9 +60,8 @@ def _backend_for(dispatch_key: str, platform=None):
                 "（第二平台接入见 ops/embedding/PLATFORM.md §5）")
         return _BACKENDS[platform]
     by_key = {
-        "Autograd": "cambricon",
-        "PrivateUse1": "cambricon",
-        "AutogradPrivateUse1": "cambricon",
+        "AutogradPrivateUse1": "cambricon",   # canonical A1 key
+        "PrivateUse1": "cambricon",           # 兼容 key
     }
     if dispatch_key not in by_key:
         raise RuntimeError(

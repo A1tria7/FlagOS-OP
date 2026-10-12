@@ -32,7 +32,11 @@ def empty_strided_aten(size, stride, *, dtype=None, layout=None, device=None,
                        pin_memory=None):
     """aten::empty_strided(SymInt[] size, SymInt[] stride, *, ...) -> Tensor"""
     _bump()
-    from kernel.torch_level import empty_strided_torch
+    # 包态优先、脚本态 fallback（多算子同进程执行，#25 review）
+    try:
+        from .kernel.torch_level import empty_strided_torch
+    except ImportError:
+        from kernel.torch_level import empty_strided_torch
     return empty_strided_torch(size, stride, dtype=dtype, layout=layout,
                                device=device, pin_memory=pin_memory)
 
@@ -54,9 +58,8 @@ def _backend_for(dispatch_key: str, platform=None):
                 "（第二平台接入见 ops/embedding/PLATFORM.md §5）")
         return _BACKENDS[platform]
     by_key = {
-        "Autograd": "cambricon",
-        "PrivateUse1": "cambricon",
-        "AutogradPrivateUse1": "cambricon",
+        "AutogradPrivateUse1": "cambricon",   # canonical A1 key
+        "PrivateUse1": "cambricon",           # 兼容 key
     }
     if dispatch_key not in by_key:
         raise RuntimeError(

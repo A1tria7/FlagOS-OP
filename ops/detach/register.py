@@ -28,7 +28,11 @@ def _bump():
 
 def detach_aten(self):
     _bump()
-    from kernel.torch_level import detach_torch
+    # 包态优先、脚本态 fallback（多算子同进程执行，#25 review）
+    try:
+        from .kernel.torch_level import detach_torch
+    except ImportError:
+        from kernel.torch_level import detach_torch
     return detach_torch(self)
 
 
@@ -49,9 +53,8 @@ def _backend_for(dispatch_key: str, platform=None):
                 "（第二平台接入见 ops/embedding/PLATFORM.md §5）")
         return _BACKENDS[platform]
     by_key = {
-        "Autograd": "cambricon",
-        "PrivateUse1": "cambricon",
-        "AutogradPrivateUse1": "cambricon",
+        "AutogradPrivateUse1": "cambricon",   # canonical A1 key
+        "PrivateUse1": "cambricon",           # 兼容 key
     }
     if dispatch_key not in by_key:
         raise RuntimeError(

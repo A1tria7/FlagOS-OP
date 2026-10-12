@@ -30,7 +30,11 @@ def _bump() -> None:
 def dropout_aten(input, p: float, train: bool):
     """aten::dropout(Tensor input, float p, bool train) -> Tensor"""
     _bump()
-    from kernel.triton_level import dropout_triton
+    # 包态优先、脚本态 fallback（多算子同进程执行，#25 review）
+    try:
+        from .kernel.triton_level import dropout_triton
+    except ImportError:
+        from kernel.triton_level import dropout_triton
     return dropout_triton(input, p, train)
 
 
@@ -51,9 +55,8 @@ def _backend_for(dispatch_key: str, platform=None):
                 "（第二平台接入见 ops/embedding/PLATFORM.md §5）")
         return _BACKENDS[platform]
     by_key = {
-        "Autograd": "cambricon",
-        "PrivateUse1": "cambricon",
-        "AutogradPrivateUse1": "cambricon",
+        "AutogradPrivateUse1": "cambricon",   # canonical A1 key
+        "PrivateUse1": "cambricon",           # 兼容 key
     }
     if dispatch_key not in by_key:
         raise RuntimeError(

@@ -51,9 +51,32 @@ def run(profile):
     # 4) 回退: 不支持 dtype（int32）仍正确
     assert torch.equal(xi.clone(), xi_ref), "int32 回退不一致"
 
+    # 5) 包态执行（多算子同进程）: 从 ops.clone 包入口进来须能找到并执行
+    #    ops.clone.kernel，而非顶层 kernel（#25 review 指出的包态运行时缺口）
+    import os
+    import subprocess
+
+    root = str(OP_DIR.parent.parent)
+    child = (
+        "import torch, torch_mlu\n"
+        "from ops.clone.register import clone_aten\n"
+        f"x = torch.zeros(3, device='{dev}')\n"
+        "y = clone_aten(x)\n"
+        "assert tuple(y.shape) == (3,), y.shape\n"
+        "assert y.data_ptr() != x.data_ptr()\n"
+        "print('PKG_MODE_OK')\n"
+    )
+    env = os.environ.copy()
+    env["PYTHONPATH"] = root + os.pathsep + env.get("PYTHONPATH", "")
+    proc = subprocess.run([sys.executable, "-c", child], capture_output=True,
+                          text=True, cwd=root, env=env)
+    assert proc.returncode == 0 and "PKG_MODE_OK" in proc.stdout, \
+        f"包态执行失败:\n{proc.stdout}\n{proc.stderr}"
+
     return {"ok": True,
             "registered": f"aten::clone@{profile.dispatch_key}",
-            "intercepted_calls": reg.CALL_COUNT["clone"]}
+            "intercepted_calls": reg.CALL_COUNT["clone"],
+            "package_mode": True}
 
 
 if __name__ == "__main__":
