@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 算子名称 / 路线 / 级别 | `type_as` / A1 / Triton 级（+ torch 级对照） |
-| 目标设备 / 测试日期 | `cambricon`（MLU590-M9）/ 2026-09-18 |
+| 目标设备 / 测试日期 | `cambricon`（MLU590-M9）/ 2026-09-18；2026-10-12 契约复验 |
 | 结论 | **通过**（应用层为等价 torch API 验证，非真实 vLLM） |
 
 ## 1. 测试范围
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | kernel 层（精度/哨兵/性能） | ✅ | `test/kernel_level.py cambricon` | PASS |
 | 框架层（注册/拦截） | ✅ | `test/op_level.py cambricon` | PASS |
+| 注册契约 | ✅ | PR #25 / `register.py` | `counter` + `platform`；canonical `AutogradPrivateUse1`，兼容 `PrivateUse1`；包态导入优先 |
 | 应用层 | ✅（等价） | `test/framework_level.py cambricon` | PASS（vLLM 未安装） |
 | 黄金回归 | ✅ | `script/gen_golden.py` + `check_accuracy.py` | 111/111 |
 | 性能回归门禁 | ✅ | `scripts/perf_compare.py --device cambricon` | 基线已建 |

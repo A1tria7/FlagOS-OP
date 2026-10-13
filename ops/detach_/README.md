@@ -30,4 +30,9 @@ python3 script/bench_perf.py --device mlu
 2. 判定：原地返回 self + requires_grad=False + 存储不变。
 3. 无 Triton/硬件级（该类算子没有可编译的元素级设备码）。
 
+## 注册契约（2026-10-12）
+
+`register_a1` 已对齐 `counter` / `platform` 签名，但该算子按设计不做
+A1 注册，调用时保持 `NotImplementedError`。
+
 详见 [REPORT.md](REPORT.md)。

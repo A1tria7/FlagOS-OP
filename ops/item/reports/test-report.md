@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 算子 / 路线 / 级别 | `item` / A1 / torch 级（host 标量） |
-| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18 |
+| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18；2026-10-12 契约复验 |
 | 结论 | **通过** |
 
 ## 1. 测试范围
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | kernel 层 | ✅ | `test/kernel_level.py` | PASS（12 项） |
 | 框架层（注册/拦截） | ✅ | `test/op_level.py` | aten::item@PrivateUse1（拦截 1 次） |
+| 注册契约 | ✅ | PR #25 / `register.py` | `counter` + `platform`；canonical `AutogradPrivateUse1`，兼容 `PrivateUse1`；包态导入优先 |
 | 应用层 | ✅ | `test/framework_level.py` | PASS |
 | 黄金 | ✅ | `script/` | 36/36 |
 

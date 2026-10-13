@@ -34,6 +34,11 @@
 ## [Unreleased]
 
 ### Changed
+- **ops/ 文档契约同步（2026-10-13）**: 13 个 MLU 算子的
+  README / REPORT / development / test-report 补记 PR #25 后的
+  `counter + platform` 注册契约、canonical `AutogradPrivateUse1` /
+  兼容 `PrivateUse1`、包态优先导入与 clone 包态执行用例；修正
+  `empty` 的自用/实验路线与 sdpa_math 黄金口径描述
 - sdpa `PLATFORM.md` 补记多算子 perf registry 顺序加载时的顶层
   `reference` 遮蔽约束；backend 导入回归测试同步覆盖 P800 与 MLU
 

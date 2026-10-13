@@ -4,9 +4,9 @@
 |---|---|
 | 算子名称 | `type_as`（`self` cast 到 `other.dtype`，留在 `self.device`） |
 | 语义 | [reference.py](reference.py)（CPU 原生 `.to`，位级判卷标准） |
-| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu / PrivateUse1） |
+| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu；A1 canonical `AutogradPrivateUse1`，兼容 `PrivateUse1`） |
 | 目标设备 / 路线 | `cambricon`（MLU590-M9）/ **A1**（aten `type_as` 拦截） |
-| 日期 / 状态 | 2026-09-18 / 定稿 |
+| 日期 / 状态 | 2026-09-18 定稿 / 2026-10-12 注册契约同步 |
 
 ## 实现矩阵（三级）
 
@@ -26,6 +26,15 @@
 | 应用层 | `python3 test/framework_level.py cambricon` | ✅（等价 torch API，vLLM 未安装） | — |
 | 黄金回归 | `script/gen_golden.py` + `check_accuracy.py` | ✅ 111/111 | [goldendata/](goldendata/README.md) |
 | 性能 | `scripts/perf_run.py` / 基线门禁 | ✅ | [reports/performance.md](reports/performance.md) |
+
+## 2026-10-12 注册契约同步
+
+- `register_a1` 支持 `counter["n"]` 拦截计数与显式 `platform`。
+- canonical key 为 `AutogradPrivateUse1`，`PrivateUse1` 作为旧 profile /
+  单算子脚本态兼容 key。
+- `type_as` 的实现导入为包态优先、脚本态 fallback，包入口使用
+  `from ops.type_as import register_a1`。
+- 复验见 PR #25：MLU 13/13 三层全绿、unit tests 与真实 vLLM A1 注入通过。
 
 ## 关键数字
 

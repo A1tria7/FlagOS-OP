@@ -7,6 +7,8 @@
 | 目标设备 | `cambricon`（Cambricon MLU590-M9） |
 | 日期 / 状态 | 2026-09-18 / 定稿 |
 
+> **2026-10-12 维护记录**：`register_a1` 已升级为 `counter + platform` 契约；canonical key 为 `AutogradPrivateUse1`，历史 `PrivateUse1` 结论保留为兼容 key。实现导入已改为包态优先、单算子脚本态 fallback。见 PR #25。
+
 ## 1. 环境配置
 
 | 项 | 值 |

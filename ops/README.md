@@ -28,22 +28,21 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
 | 算子 | 硬件平台 | 开发级别 | 路线 | 状态 | 交付报告 | 备注 |
 |---|---|---|---|---|---|---|
 | [sdpa](sdpa/)（scaled_dot_product_attention） | **3** · ascend910 / p800-kunlunxin / mlu590 | Triton / 厂商委托 | A1（aten 拦截） | ✅ 定稿 | [REPORT](sdpa/REPORT.md) | ascend910 + p800-kunlunxin + mlu590 · 三平台黄金 397/397（Ascend 历史 265/265） · [平台绑定](sdpa/PLATFORM.md) / [多平台合并](sdpa/MERGE.md) |
-| [sdpa_math](sdpa_math/)（aten::_scaled_dot_product_attention_math） | 2 · ascend910 / p800-kunlunxin | Triton / vendor O/LSE + exact-P | A1（aten 拦截） | ✅ 定稿 | [REPORT](sdpa_math/REPORT.md) | SDPA math 后端（双输出 out+概率图）· 三平台黄金 175/175 · NPU fp16 1.16-2.03x · P800 direct 1.46-2.21x native |
+| [sdpa_math](sdpa_math/)（aten::_scaled_dot_product_attention_math） | 2 · ascend910 / p800-kunlunxin | Triton / vendor O/LSE + exact-P | A1（aten 拦截） | ✅ 定稿 | [REPORT](sdpa_math/REPORT.md) | SDPA math 后端（双输出 out+概率图）· 四实现黄金 175/175 · NPU fp16 1.16-2.03x · P800 direct 1.46-2.21x native |
 | [embedding](embedding/)（aten::embedding） | **3** · ascend910 / p800-kunlunxin / cambricon | 厂商委托 / Triton 探针 | A1（aten 拦截） | ✅ 定稿 | [REPORT](embedding/REPORT.md) | 三平台稠密查表/反向 · Ascend 三层+350 PASS · MLU 174/174 逐位 · [平台绑定](embedding/PLATFORM.md) / [多平台合并](embedding/MERGE.md) |
-
-| [type_as](type_as/) | 1 · cambricon | Triton 级 | A1 aten | 三层全绿 | [REPORT.md](type_as/REPORT.md) | 黄金 111/111；位级一致 |
-| [clone](clone/) | 1 · cambricon | Triton 级 | A1 aten | 三层全绿 | [REPORT.md](clone/REPORT.md) | 黄金 48/48；存储独立 |
-| [contiguous](contiguous/) | 1 · cambricon | Triton 级 | A1 aten | 三层全绿 | [REPORT.md](contiguous/REPORT.md) | 黄金 114/114；转置 swiz 提速 ~80x |
-| [copy_](copy_/) | 1 · cambricon | Triton 级 | A1 aten | 三层全绿 | [REPORT.md](copy_/REPORT.md) | 黄金 78/78；原地+广播 |
-| [dropout](dropout/) | 1 · cambricon | Triton 级 | A1 aten | 三层全绿 | [REPORT.md](dropout/REPORT.md) | 黄金 189/189；随机分支统计判定 |
-| [empty_like](empty_like/) | 1 · cambricon | torch 级 | A1 aten | 三层全绿 | [REPORT.md](empty_like/REPORT.md) | 分配/元数据；黄金 168/168（元数据） |
-| [empty](empty/) | 1 · cambricon | torch 级 | 自用/实验 | 三层全绿 | [REPORT.md](empty/REPORT.md) | 分配原语，不注册（递归风险）；元数据 48/48 |
-| [empty_strided](empty_strided/) | 1 · cambricon | torch 级 | A1 aten | 三层全绿 | [REPORT.md](empty_strided/REPORT.md) | 分配/元数据；元数据 30/30 |
-| [detach](detach/) | 1 · cambricon | torch 级 | A1 aten | 三层全绿 | [REPORT.md](detach/REPORT.md) | 别名词义；黄金 36/36 |
-| [detach_](detach_/) | 1 · cambricon | torch 级 | 自用/实验 | 三层全绿 | [REPORT.md](detach_/REPORT.md) | 不可 A1 注册（autograd key）；36/36 |
-| [item](item/) | 1 · cambricon | torch 级 | A1 aten | 三层全绿 | [REPORT.md](item/REPORT.md) | host 标量；黄金 36/36 |
-| [_local_scalar_dense](_local_scalar_dense/) | 1 · cambricon | torch 级 | A1 aten | 三层全绿 | [REPORT.md](_local_scalar_dense/REPORT.md) | host 标量原语；36/36 |
-| [result_type](result_type/) | 1 · cambricon | torch 级 | 自用/实验 | 三层全绿 | [REPORT.md](result_type/REPORT.md) | dtype 元数据；黄金 8/8，矩阵 64 项 |
+| [type_as](type_as/) | 1 · cambricon | Triton 级 | A1 aten | ✅ 定稿 | [REPORT.md](type_as/REPORT.md) | 黄金 111/111；位级一致 |
+| [clone](clone/) | 1 · cambricon | Triton 级 | A1 aten | ✅ 定稿 | [REPORT.md](clone/REPORT.md) | 黄金 48/48；存储独立 |
+| [contiguous](contiguous/) | 1 · cambricon | Triton 级 | A1 aten | ✅ 定稿 | [REPORT.md](contiguous/REPORT.md) | 黄金 114/114；转置 swiz 提速 ~80x |
+| [copy_](copy_/) | 1 · cambricon | Triton 级 | A1 aten | ✅ 定稿 | [REPORT.md](copy_/REPORT.md) | 黄金 78/78；原地+广播 |
+| [dropout](dropout/) | 1 · cambricon | Triton 级 | A1 aten | ✅ 定稿 | [REPORT.md](dropout/REPORT.md) | 黄金 189/189；随机分支统计判定 |
+| [empty_like](empty_like/) | 1 · cambricon | torch 级 | A1 aten | ✅ 定稿 | [REPORT.md](empty_like/REPORT.md) | 分配/元数据；黄金 168/168（元数据） |
+| [empty](empty/) | 1 · cambricon | torch 级 | 自用/实验 | ✅ 定稿 | [REPORT.md](empty/REPORT.md) | 分配原语，不注册（递归风险）；元数据 48/48 |
+| [empty_strided](empty_strided/) | 1 · cambricon | torch 级 | A1 aten | ✅ 定稿 | [REPORT.md](empty_strided/REPORT.md) | 分配/元数据；元数据 30/30 |
+| [detach](detach/) | 1 · cambricon | torch 级 | A1 aten | ✅ 定稿 | [REPORT.md](detach/REPORT.md) | 别名词义；黄金 36/36 |
+| [detach_](detach_/) | 1 · cambricon | torch 级 | 自用/实验 | ✅ 定稿 | [REPORT.md](detach_/REPORT.md) | 不可 A1 注册（autograd key）；36/36 |
+| [item](item/) | 1 · cambricon | torch 级 | A1 aten | ✅ 定稿 | [REPORT.md](item/REPORT.md) | host 标量；黄金 36/36 |
+| [_local_scalar_dense](_local_scalar_dense/) | 1 · cambricon | torch 级 | A1 aten | ✅ 定稿 | [REPORT.md](_local_scalar_dense/REPORT.md) | host 标量原语；36/36 |
+| [result_type](result_type/) | 1 · cambricon | torch 级 | 自用/实验 | ✅ 定稿 | [REPORT.md](result_type/REPORT.md) | dtype 元数据；黄金 8/8，矩阵 64 项 |
 
 > 均为 MLU（cambricon）实现。合计 13 个算子。
 > 应用层：各 `test/framework_level.py` 为快速等价验证；另有**真实 vLLM** 的
@@ -51,6 +50,34 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
 > （sitecustomize 桥 + 基线/注入双跑，断言输出逐位一致）。
 > 注：`detach` 可单独注册，但在真实 vLLM 建模时会破坏 `nn.Parameter`
 > 构造，故不纳入多算子注入集（与 `detach_` 同属进程内不可共存）。
+
+### 13 个 MLU 算子的注册契约（2026-10-12）
+
+PR #25 已把 13 个算子的 `register_a1` 统一到当前库级签名：
+
+```python
+register_a1(
+    dispatch_key="AutogradPrivateUse1",
+    counter: dict | None = None,
+    platform=None,
+)
+```
+
+约定：
+
+- canonical A1 key 为 **`AutogradPrivateUse1`**；
+- `PrivateUse1` 继续作为旧 profile / 脚本态兼容 key；
+- generic `Autograd` 不作为单平台 MLU 默认映射，避免多后端同进程时扩大
+  autograd 覆盖范围；
+- 10 个可注册算子支持 `counter["n"]` 拦截计数与显式 `platform`；
+- `empty` / `detach_` / `result_type` 接受同一签名但保持
+  `NotImplementedError`，不强行注册；
+- 10 个可注册算子的实现导入均为**包态优先、单算子脚本态 fallback**；
+- `clone/test/op_level.py` 包含包态实际执行代表用例，覆盖
+  `ops.clone.register → ops.clone.kernel` 路径。
+
+PR #25 复验：MLU 13/13 三层全绿、`pytest tests/unit` 通过、真实 vLLM
+A1 注入通过。
 
 > 结构同构的教学样例 [softmax-fullstack](../examples/softmax-fullstack/)
 > 保留在 examples/（它的定位是"教"，ops/ 的定位是"用"）；
@@ -63,11 +90,11 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
   （2026-10-07 审计后新增——13 算子曾缺包化入口已补齐，后续算子
   合并前照单自查，勿再欠账）
 - **包化导入（多算子同进程必用）**: 目录含 `__init__.py`，
-  `from ops.sdpa import register_a1` / `from ops.embedding import
-  register_a1` / `from ops.sdpa_math import register_a1` 顶层名带包前缀，
-  互不遮蔽（根因与验证见
-  sdpa/reports/e2e_mini_llm.md + ops/test_packaging.py）；
-  单算子脚本模式（sys.path 注入目录）继续兼容
+  统一使用 `from ops.<算子名> import register_a1`，顶层名带包前缀、
+  互不遮蔽（根因与验证见 sdpa/reports/e2e_mini_llm.md）；
+  单算子脚本模式（sys.path 注入目录）继续兼容。CI 的 `ops-packaging`
+  job 负责 CPU 包入口扫描；`ops/test_packaging.py` 是 NPU 真机 E2E，
+  二者口径不同
 - 未实现的级别**置空 + 说明**（`kernel/hardware_level/README.md`），
   不留空文件
 - 命名/级别/路线术语遵循 [体系结构](../docs/architecture.md)；

@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 算子 / 路线 / 级别 | `contiguous` / A1 / Triton 级 |
-| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18 |
+| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18；2026-10-12 契约复验 |
 | 结论 | **通过** |
 
 ## 1. 测试范围
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | kernel 层 | ✅ | `test/kernel_level.py cambricon` | PASS |
 | 框架层 | ✅ | `test/op_level.py cambricon` | PASS |
+| 注册契约 | ✅ | PR #25 / `register.py` | `counter` + `platform`；canonical `AutogradPrivateUse1`，兼容 `PrivateUse1`；包态导入优先 |
 | 应用层 | ✅（等价） | `test/framework_level.py cambricon` | PASS |
 | 黄金回归 | ✅ | `script/` 两脚本 | 114/114 |
 | 性能门禁 | ✅ | `scripts/perf_run.py --pattern ops.contiguous` | 可建基线 |
