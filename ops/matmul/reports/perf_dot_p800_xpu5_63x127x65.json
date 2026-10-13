@@ -1,0 +1,34 @@
+{
+  "device": "cuda:1",
+  "shape": [
+    1,
+    63,
+    127,
+    65
+  ],
+  "dtype": "bfloat16",
+  "warmup": 20,
+  "iters": 100,
+  "input_seed": 20260929,
+  "timing": "per-call scalar readback",
+  "isolation": "one process per implementation",
+  "results": {
+    "triton": {
+      "latency_ms": 0.12489286251366138,
+      "tflops": 0.00832817808052262,
+      "relative_error": 0.006024096385542169,
+      "input_seed": 20260929,
+      "entry": "matmul_triton"
+    },
+    "native": {
+      "latency_ms": 0.08746557869017124,
+      "tflops": 0.011891878103092942,
+      "relative_error": 0.0,
+      "input_seed": 20260929,
+      "entry": "torch.matmul"
+    }
+  },
+  "unavailable": {
+    "flaggems": "ZeroDivisionError: float division by zero"
+  }
+}
