@@ -11,11 +11,11 @@ python3 run.py --route a1 --level op     # 跑最轻的一格
 
 ## 贡献类型与检查清单
 
-### 新增样例
+### 新增算子
 
 - [ ] 从 [templates/operator](templates/operator/) 样板起步，目录放
       [ops/](ops/README.md)（`cp -r templates/operator ops/<算子名>/`）
-      并在 ops/README 索引表登记
+      并在 [ops/catalog.yaml](ops/catalog.yaml) 登记算子、平台和证据
 - [ ] **包化入口必带**: 目录含 `__init__.py`（模板已带，改名后更新
       导出）；合并前 `python3 ops/test_packaging.py` 全算子导入扫描
       绿（多算子同进程冲突的硬门，见 #13/#14 实证）
@@ -32,6 +32,13 @@ python3 run.py --route a1 --level op     # 跑最轻的一格
 - [ ] 标注[开发层级](docs/architecture.md#levels)（Triton 级/torch 级/硬件级）
 - [ ] 更新 `examples/README.md` 索引表与定位图
 - [ ] 产出[测试报告](templates/op-test-report.md)（样例见 [reports/examples](reports/examples/)）
+
+`ops/README.md` 由 `ops/catalog.yaml` 生成，不要手工编辑。登记 catalog 后运行：
+
+```bash
+python3 scripts/build_ops_index.py
+python3 scripts/build_ops_index.py --check
+```
 
 ### 新增设备 profile
 

@@ -55,6 +55,7 @@ flowchart TB
 
 | 我想… | 去哪 |
 |---|---|
+| 下载仓库并与 FlagGems 配合使用 | [安装与 FlagGems 配合使用](installation.md) |
 | 5 分钟跑通 | [快速开始](getting-started.md) |
 | 从样板开始开发新算子 | [算子样板](../templates/operator/README.md)（copy-paste 起点） |
 | 理解整体设计 | [体系结构](architecture.md) |

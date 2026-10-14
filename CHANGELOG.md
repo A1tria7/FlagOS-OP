@@ -33,6 +33,15 @@
 
 ## [Unreleased]
 
+### Added
+- 新增 [安装与 FlagGems 配合使用](docs/installation.md)：源码仓库
+  `PYTHONPATH` 口径、FlagGems 运行时 / 源码共用方式、A1 注册示例、
+  拦截计数、注册不可撤销与同算子冲突边界、常见 import / 命中问题；
+  根目录新增 `INSTALL.md` 入口；新增 `examples/operator-usage`，用同一条
+  连续调用链对比 native、direct kernel、FlagGems + 多算子 A1 混合映射，
+  并以子进程隔离 baseline 与注册路径、用 counter 验证命中；CPU CI 增加
+  import 与 `--help` smoke test，硬件路径仍按算子 profile 复验
+
 ### Changed
 - **ops/ 文档契约同步（2026-10-13）**: 13 个 MLU 算子的
   README / REPORT / development / test-report 补记 PR #25 后的
@@ -51,6 +60,9 @@
   `reference` 遮蔽约束；backend 导入回归测试同步覆盖 P800 与 MLU
 
 ### Fixed
+- catalog foundation 算子的 route 校验与文档契约对齐：顶层 route 与
+  “每个平台条目均声明 route”两种形式均可用；贡献指南改为维护
+  `ops/catalog.yaml` 并重新生成 `ops/README.md`
 - P800 性能门禁多算子加载时，`ops.sdpa` backend 的裸 `reference`
   导入可能命中 `sdpa_math.reference` 等同名顶层模块，导致
   `ops.sdpa.p800.forward` SKIP；改为包态相对导入优先并保留单算子

@@ -103,12 +103,21 @@ def validate_catalog(catalog: dict, root: Path = ROOT) -> None:
         for field in ("purpose", "key_result"):
             if not isinstance(op.get(field), str) or not op[field]:
                 raise ValueError(f"operator {name} lacks {field}")
-        if groups[group]["kind"] == "foundation" and not op.get("route"):
-            raise ValueError(f"foundation operator {name} lacks route")
         if not (root / "ops" / directory).is_dir():
             raise ValueError(f"operator directory does not exist: {directory}")
 
         platforms = _require_mapping(op.get("platforms"), f"{name}.platforms")
+        if groups[group]["kind"] == "foundation":
+            routes = (
+                [op["route"]]
+                if op.get("route")
+                else [platform.get("route") for platform in platforms.values()]
+            )
+            if not routes or any(not route for route in routes):
+                raise ValueError(
+                    f"foundation operator {name} lacks a top-level route "
+                    "or a route for every platform"
+                )
         for family, platform in platforms.items():
             if family not in families:
                 raise ValueError(f"operator {name} has unknown family {family!r}")

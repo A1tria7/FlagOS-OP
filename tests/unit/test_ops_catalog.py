@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from copy import deepcopy
 
 import yaml
 
@@ -47,6 +48,25 @@ def test_generated_ops_index_is_current():
     catalog = load_catalog()
     validate_catalog(catalog)
     assert OUTPUT_PATH.read_text() == render_index(catalog)
+
+
+def test_foundation_route_may_come_from_every_platform_entry():
+    catalog = deepcopy(load_catalog())
+    foundation = next(
+        op for op in catalog["operators"]
+        if catalog["operator_groups"][op["group"]]["kind"] == "foundation"
+    )
+    original_route = foundation["route"]
+    foundation.pop("route")
+    for platform in foundation["platforms"].values():
+        platform["route"] = original_route
+
+    validate_catalog(catalog)
+    row = next(
+        row for row in render_index(catalog).splitlines()
+        if f"({foundation['directory']}/)" in row
+    )
+    assert f"| {original_route} |" in row
 
 
 def test_platform_claims_are_incremental_and_backed_by_profiles():
