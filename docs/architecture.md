@@ -106,8 +106,8 @@ vllm_fl OpManager，FlagGems 同时在两张网里有身份），关系图与实
 - [softmax-fullstack](../examples/softmax-fullstack/)（Triton 级）: 流式归约 + 尾块安全（样板同构样例）
 - [backward-example](../examples/backward-example/)（Triton 级）: autograd fwd+bwd
 
-全部 14 个样例在 3×3 矩阵中的位置与涵盖范围见
-[样例定位图](../examples/README.md#map)。
+15 个样例中，开发样例在 3×3 矩阵中的位置与涵盖范围见
+[样例定位图](../examples/README.md#map)；`operator-usage` 演示运行时组合。
 AI 生成产物的进入方式见 [AI 生成算子接入](ai-intake.md)。
 
 <a id="tree"></a>
@@ -125,7 +125,7 @@ flagos-op-templates/
 │   ├── a1_aten/              torch 算子替换
 │   ├── a2_dispatch/          Triton → FlagOS 融合算子 插件
 │   └── b_vendor/             厂商算子注册（csrc + audit）
-├── examples/                 14 个样例（9 矩阵格 + 全链路/专项，见[定位图](../examples/README.md#map)）
+├── examples/                 15 个样例（9 矩阵格 + 全链路/专项 + 运行时组合，见[定位图](../examples/README.md#map)）
 ├── tests/
 │   ├── kernel_level/         [kernel 直测层](testing.md#kernel-level) + [一致性](testing.md#consistency)
 │   ├── op_level/             注册/分发/拦截层

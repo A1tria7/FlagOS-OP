@@ -1,8 +1,9 @@
-# 样例索引（3 路线 × 3 层级 = 9 格）
+# 样例索引（3 路线 × 3 层级 + 运行时组合）
 
-这里的每个目录都是一个可以直接运行的样例，对应 3×3 矩阵中的一格，
-或者一条贯穿三层的完整链路。先在定位图里找到你关心的路线和层级，
-再进对应目录看代码和 README。
+这里的目录分为两类：开发样例对应 3×3 矩阵中的一格，或贯穿三层的一条
+完整链路；`operator-usage` 是运行时组合样例，演示 FlagGems 与 FlagOS-OP
+在连续调用链中的混合映射。先在定位图里找到开发样例的位置，再进对应
+目录看代码和 README。
 
 <a id="template-map"></a>
 ## 与算子样板的对应
@@ -12,7 +13,7 @@
 （kernel/ 三级 · test/ 三层 · example.py 一键编排 · goldendata/ ·
 script/ · REPORT + 交付报告四件套；本算子硬件级置空并说明）——
 模板是空壳，本样例是实肉；从样板开始开发的人切到它零认知切换。
-其余样例是**格级/专项教学**，保持单文件聚焦；新增完整算子样例时
+其余开发样例是**格级/专项教学**，保持单文件聚焦；新增完整算子样例时
 直接复制样板。
 
 | 样例 | 对应样板槽位 | 说明 |
@@ -99,6 +100,7 @@ flowchart TB
 | [bmm-fullstack](bmm-fullstack/) | torch.bmm 贯穿 算子库层→框架层→应用层（含 [#11](../docs/known-issues.md) 根因发现） | **Triton** |
 | **[b-fullstack](b-fullstack/)** ⭐ | **旗舰: 同一 C++ kernel 贯穿 算子库层→框架层→应用层**（JIT 编译→vendor 注册→真实推理，附[开发报告](b-fullstack/report.md)） | **torch** |
 | [b-framework](b-framework/) | audit vendor 拦截真实 vLLM + 黄金回归 | torch（委托） |
+| [operator-usage](operator-usage/) | 连续算子调用对比 native / direct kernel / FlagGems + A1 混合映射 | **运行时组合** |
 
 运行方式统一: `python3 examples/<样例名>/example.py [设备profile名]`。
 
