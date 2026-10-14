@@ -154,7 +154,7 @@ FlagOS-OP 的算子通过自己的 `register_a1()` 或平台 facade 接入：
 | `ops/sdpa_math` | private ATen op A1 | FlagGems 通常没有同语义双输出实现 |
 | `ops/sdpa` | 标准 SDPA / 平台 facade | 可能与 FlagGems 或厂商 backend 竞争 |
 | `ops/embedding` | 标准 embedding A1 | 需避免与 FlagGems embedding 冲突 |
-| 13 个基础 ATen 算子 | MLU A1 | 用于基础语义和真实 vLLM 注入回归 |
+| 基础 ATen 算子族 | MLU A1 | MLU 三层与注册契约复验；真实 vLLM 仅保留统一框架测试证据 |
 
 正确关系是并列组件：
 
@@ -208,12 +208,15 @@ import flag_gems
 
 from ops.sdpa_math import register_a1
 
+calls = {"n": 0}
+
 # 共享运行时中推荐 scoped 启用，避免 full enable 覆盖大量 ATen 算子。
 flag_gems.only_enable(include=["gelu"])
 
 # 注册目标算子。返回对象必须保存引用，否则可能被 GC。
 libs = register_a1(
     dispatch_key="AutogradCUDA",
+    counter=calls,
     impl="p800",
 )
 assert libs
@@ -233,6 +236,7 @@ with torch.no_grad():
     activated = torch.nn.functional.gelu(output)
 
 print(output.shape, probabilities.shape, activated.shape)
+assert calls["n"] == 1
 ```
 
 当前 P800 运行时在启用 FlagGems GELU 时会打印一次
