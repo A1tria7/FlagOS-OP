@@ -54,15 +54,16 @@ python3 scripts/intake_validate.py --validate-only        # AI 生成算子契�
 
 | 顺序 | 文档 | 内容 |
 |---|---|---|
-| 1 | [快速开始](docs/getting-started.md) | 5 分钟跑通第一格 |
-| 2 | [体系结构](docs/architecture.md) | 物理栈 · 开发级别 · 路线 · 3×3 矩阵 |
-| 3 | [全链路指南](docs/fullstack-guide.md) | 七步流水线 · 每步抽象动作 × 样例映射 |
-| 4 | [测试体系](docs/testing.md) | 验证层级 · 黄金 · 漂移 · 一致性 |
-| 5 | [性能回归追踪](docs/performance-regression.md) | 结构化记录 · 入库基线 · 双档门禁 |
-| 6 | [验收标准](docs/acceptance.md) | 精度/性能口径 · Must/Should 分级 · 重验 runbook |
-| 7 | [算子集成指南](docs/integration.md) | 交付路径选择 · FlagGems 贡献 · 分发开销实测 |
-| 8 | [AI 生成算子接入](docs/ai-intake.md) | KernelGen/KernelBench 产物 → 三级验证 |
-| 9 | [已知问题](docs/known-issues.md) | 19 条实测记录 + 检测方法 |
+| 1 | [安装与 FlagGems 配合使用](docs/installation.md) | 源码仓库安装 · FlagGems 共用 · A1 注册边界 |
+| 2 | [快速开始](docs/getting-started.md) | 5 分钟跑通第一格 |
+| 3 | [体系结构](docs/architecture.md) | 物理栈 · 开发级别 · 路线 · 3×3 矩阵 |
+| 4 | [全链路指南](docs/fullstack-guide.md) | 七步流水线 · 每步抽象动作 × 样例映射 |
+| 5 | [测试体系](docs/testing.md) | 验证层级 · 黄金 · 漂移 · 一致性 |
+| 6 | [性能回归追踪](docs/performance-regression.md) | 结构化记录 · 入库基线 · 双档门禁 |
+| 7 | [验收标准](docs/acceptance.md) | 精度/性能口径 · Must/Should 分级 · 重验 runbook |
+| 8 | [算子集成指南](docs/integration.md) | 交付路径选择 · FlagGems 贡献 · 分发开销实测 |
+| 9 | [AI 生成算子接入](docs/ai-intake.md) | KernelGen/KernelBench 产物 → 三级验证 |
+| 10 | [已知问题](docs/known-issues.md) | 19 条实测记录 + 检测方法 |
 
 深入主题: [A1](docs/route-a1-aten.md) / [A2](docs/route-a2-dispatch.md) / [B](docs/route-b-vendor.md) 路线详解 ·
 [设备接入](docs/device-profiles.md) · [报告](docs/reporting.md) ·

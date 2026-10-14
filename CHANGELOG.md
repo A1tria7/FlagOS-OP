@@ -33,6 +33,12 @@
 
 ## [Unreleased]
 
+### Added
+- 新增 [安装与 FlagGems 配合使用](docs/installation.md)：源码仓库
+  `PYTHONPATH` 口径、FlagGems 运行时 / 源码共用方式、A1 注册示例、
+  拦截计数、注册不可撤销与同算子冲突边界、常见 import / 命中问题；
+  根目录新增 `INSTALL.md` 入口
+
 ### Changed
 - **ops/ 文档契约同步（2026-10-13）**: 13 个 MLU 算子的
   README / REPORT / development / test-report 补记 PR #25 后的

@@ -5,6 +5,8 @@
 > 这一页帮你用 5 分钟跑通第一个验证。如果还不清楚这个库在做什么，
 > 先读[体系结构](architecture.md)；想完整开发一个算子，跟着
 > [全链路指南](fullstack-guide.md)走。
+> 仓库下载、`PYTHONPATH`、FlagGems 源码 / 运行时配合方式见
+> [安装与 FlagGems 配合使用](installation.md)。
 
 ## 环境要求
 
