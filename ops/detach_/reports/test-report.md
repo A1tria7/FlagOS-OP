@@ -3,7 +3,7 @@
 | 项 | 值 |
 |---|---|
 | 算子 / 路线 / 级别 | `detach_` / 自用/实验 / torch 级（别名/元数据（autograd）） |
-| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18 |
+| 目标设备 / 日期 | `cambricon`（MLU590-M9）/ 2026-09-18；2026-10-12 契约复验 |
 | 结论 | **通过** |
 
 ## 1. 测试范围
@@ -12,6 +12,7 @@
 |---|---|---|---|
 | kernel 层 | ✅ | `test/kernel_level.py` | PASS（24 项） |
 | 框架层（注册/拦截） | ✅ | `test/op_level.py` | —（detach_ 非 backend dispatch，不可 A1 注册） |
+| 注册契约 | ✅ | PR #25 / `register.py` | 签名对齐；仍按设计拒绝 A1 注册 |
 | 应用层 | ✅ | `test/framework_level.py` | PASS |
 | 黄金 | ✅ | `script/` | 36/36 |
 

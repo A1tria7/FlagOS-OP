@@ -8,7 +8,7 @@
 | 算子名称 | `aten::_scaled_dot_product_attention_math`（SDPA **math 后端**，双输出 `(out, attn_probs)`） |
 | 语义 | [reference.py](reference.py)（GQA / causal / bool·float mask / dropout 双规则 / fp32 内部；P800 半精度 fast path 有保守回退） |
 | 目标设备 / 路线 | `ascend910` + `p800-kunlunxin` + `cpu` / **A1** ☑（aten 拦截，成对注册 `Autograd*` + 纯设备键） |
-| 日期 / 状态 | 2026-10-01 / 三平台定稿 |
+| 日期 / 状态 | 2026-10-01 定稿 / 2026-10-12 文档复核 |
 
 ## 实现矩阵（三级）
 

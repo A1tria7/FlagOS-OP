@@ -1,6 +1,6 @@
 # empty（分配/元数据算子）
 
-`aten::empty` 的 MLU（Cambricon）实现，路线 **A1**，
+`aten::empty` 的 MLU（Cambricon）实现，路线 **自用/实验**，
 **torch 级**（无 Triton / 硬件级，分配算子无数值/设备码）。
 
 ## 定位
@@ -29,5 +29,10 @@ python3 script/bench_perf.py --device mlu
 1. 实现：meta 推 stride + empty_strided（避免调用自身递归）。
 2. 未初始化 → **不能做数值/哨兵断言**，黄金只比元数据。
 3. 注册：—。
+
+## 注册契约（2026-10-12）
+
+`register_a1` 已对齐 `counter` / `platform` 签名，但该算子按设计不做
+A1 注册，调用时保持 `NotImplementedError`。
 
 详见 [REPORT.md](REPORT.md)。

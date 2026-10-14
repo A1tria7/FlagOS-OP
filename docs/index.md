@@ -64,7 +64,8 @@ flowchart TB
 | 完整走一遍开发 | [全链路指南](fullstack-guide.md)（七步流水线 + 覆盖矩阵） |
 | 开发完成后交付/集成 | [集成指南](integration.md)（路径选择 + 分发开销实测） |
 | 确认"精度/性能够不够" | [验收标准](acceptance.md)（口径 + Must/Should 分级 + 重验 runbook） |
-| 存放/查找已开发算子 | [ops/](../ops/README.md)（样板同构 + 索引表） |
+| 存放/查找已开发算子 | [ops/](../ops/README.md)（catalog 生成的增量矩阵） |
+| 维护算子 / 平台矩阵 | [算子目录维护指南](operator-catalog.md)（六平台增量口径） |
 | 理解每层验证 | [测试体系](testing.md) |
 | 追踪性能回归 | [性能回归追踪](performance-regression.md) |
 | 接入 AI 生成的算子 | [AI 生成算子接入](ai-intake.md) |

@@ -4,9 +4,9 @@
 |---|---|
 | 算子名称 | `detach_`（别名/元数据（autograd）类） |
 | 语义 | [reference.py](reference.py)：原地脱离 autograd，返回 self (requires_grad=False) |
-| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu / PrivateUse1） |
+| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu；register 契约保留，但该算子不可 A1 注册） |
 | 目标设备 / 路线 | `cambricon`（MLU590-M9）/ **自用/实验** |
-| 日期 / 状态 | 2026-09-18 / 定稿 |
+| 日期 / 状态 | 2026-09-18 定稿 / 2026-10-12 注册契约同步 |
 
 ## 实现矩阵（三级）
 
@@ -26,6 +26,12 @@
 | 应用层 | `test/framework_level.py` | ✅ |
 | 黄金 | `script/` | ✅ 36/36 |
 | 性能 | 采样 | ✅ 0.0012ms |
+
+## 2026-10-12 注册契约同步
+
+- `register_a1` 已对齐 `counter` / `platform` 签名。
+- 该算子保持 `NotImplementedError`，不强行做 A1 注册。
+- 复验见 PR #25：MLU 13/13 三层全绿、unit tests 与真实 vLLM A1 注入通过。
 
 ## 结论
 
