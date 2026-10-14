@@ -118,6 +118,8 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
 - [ ] 三层测试: test/{kernel,op,framework}_level.py 全绿
 - [ ] 性能对照: script/bench_perf.py（native 参照必备）+ reports/ 四件套
 - [ ] 黄金: goldendata/ + script/check_accuracy.py 全过
+- [ ] 算子目录: `ops/catalog.yaml` 已登记，且
+      `python3 scripts/build_ops_index.py --check` 通过
 - [ ] 包化回归: `ops/test_packaging.py` 全算子导入扫描通过
 - [ ] 多平台时: PLATFORM.md（绑定清单）+ MERGE.md（七步流程）
 - [ ] 署名: 改动处 `wt-YYYY-MM-DD-fix` + `# wt <邮箱>`，commit 作者一致

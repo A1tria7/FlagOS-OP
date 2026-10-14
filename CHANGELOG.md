@@ -41,6 +41,12 @@
   `empty` 的自用/实验路线与 sdpa_math 黄金口径描述；`ops/README`
   重组为核心多平台算子与 MLU 基础 ATen 算子两组，基础算子再按
   布局/随机/分配/标量用途分组
+- **可扩放算子目录（2026-10-14）**: 新增 `ops/catalog.yaml` 作为
+  算子 / 平台矩阵唯一事实来源，登记六个目标厂商平台家族与当前增量
+  交付状态；`scripts/build_ops_index.py` 生成 `ops/README.md` 并校验
+  profile、目录、平台声明和多平台文档，配套
+  `docs/operator-catalog.md` 与单元测试；新增 `ops-catalog` CI 门，
+  并恢复完整的 docs-and-syntax 链接 / 语法 / YAML / 基线检查
 - sdpa `PLATFORM.md` 补记多算子 perf registry 顺序加载时的顶层
   `reference` 遮蔽约束；backend 导入回归测试同步覆盖 P800 与 MLU
 
