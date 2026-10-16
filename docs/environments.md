@@ -15,6 +15,7 @@
 | 硬件、系统、Python、软件包版本 | [configs/env/](../configs/env/) | 环境声明与 `check_env` 核对 |
 | 单次精度、性能和应用验证 | 算子 `REPORT.md`、`reports/` 与性能 JSON | 限定每条结论的适用范围 |
 | 算子 / 平台覆盖状态 | [算子 / 平台矩阵](operator-catalog.md) | 判断某平台是否已有交付算子 |
+| 外部基座镜像线索 | [基座镜像索引](base-images.md) | 查看协作方镜像 tag 与分发状态 |
 
 核对当前运行时：
 
@@ -44,6 +45,7 @@ python3 scripts/build_env_index.py --check
 | Python | `3.11.15` |
 | 声明采集时间 | 软件栈 2026-09-16 · 硬件快照 2026-09-16 |
 | 环境锁 | [`ascend910.lock.yaml`](../configs/env/ascend910.lock.yaml) |
+| 基座镜像 | 未登记 |
 
 适用范围：
 
@@ -76,6 +78,7 @@ python3 scripts/build_env_index.py --check
 | Python | `3.12.3` |
 | 声明采集时间 | 软件栈 2026-09-23 · 硬件快照 2026-09-23 |
 | 环境锁 | [`cambricon.lock.yaml`](../configs/env/cambricon.lock.yaml) |
+| 基座镜像 | 未登记 |
 
 适用范围：
 
@@ -115,6 +118,7 @@ python3 scripts/build_env_index.py --check
 | Python | `3.12.13` |
 | 声明采集时间 | 软件栈 2026-09-23 · 硬件快照 2026-09-23 |
 | 环境锁 | [`mlu590.lock.yaml`](../configs/env/mlu590.lock.yaml) |
+| 基座镜像 | 未登记 |
 
 适用范围：
 
@@ -147,6 +151,7 @@ python3 scripts/build_env_index.py --check
 | Python | `3.10.18` |
 | 声明采集时间 | 软件栈 2026-08-27 · 硬件快照 2026-10-16 |
 | 环境锁 | [`p800-kunlunxin.lock.yaml`](../configs/env/p800-kunlunxin.lock.yaml) |
+| 基座镜像 | [`kunlunxin-p800-operator-runtime-v2`](base-images.md#kunlunxin-p800-operator-runtime-v2)（版本对齐） |
 
 适用范围：
 

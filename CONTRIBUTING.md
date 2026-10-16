@@ -50,6 +50,10 @@ python3 scripts/build_ops_index.py --check
 - [ ] 新增 `configs/env/<profile>.lock.yaml`，运行
       `python3 scripts/build_env_index.py` 更新
       [软硬件环境版本汇总](docs/environments.md)
+- [ ] 有协作基座镜像时，在 `configs/images/catalog.yaml` 登记平台、
+      系列、版本、分发状态和外部来源，并运行
+      `python3 scripts/build_base_image_index.py` 更新
+      [基座镜像索引](docs/base-images.md)
 
 ### 修改核心测试
 

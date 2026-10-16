@@ -119,6 +119,33 @@ def validate_locks(locks: list[dict], root: Path = ROOT) -> None:
                 raise ValueError(f"{path}: duplicate evidence path {evidence_path}")
             evidence_paths.add(evidence_path)
 
+        base_images = lock.get("base_images", [])
+        if not isinstance(base_images, list):
+            raise ValueError(f"{path}: base_images must be a list")
+        image_catalog = yaml.safe_load(
+            (root / "configs" / "images" / "catalog.yaml").read_text()
+        )
+        known_images = {item["id"]: item for item in image_catalog["images"]}
+        for item in base_images:
+            if not isinstance(item, dict):
+                raise ValueError(f"{path}: base_images items must be mappings")
+            image_id = _require_string(item.get("image_id"), f"{path}: image_id")
+            relation = _require_string(
+                item.get("relation"), f"{path}: base_images.relation"
+            )
+            if relation not in {"version-aligned", "validated-in-image"}:
+                raise ValueError(f"{path}: unknown base-image relation {relation!r}")
+            if image_id not in known_images:
+                raise ValueError(f"{path}: unknown base image {image_id!r}")
+            if known_images[image_id]["family"] != family:
+                raise ValueError(f"{path}: base image family does not match {image_id}")
+            if relation == "validated-in-image" and not (
+                item.get("image_instance_id") or item.get("image_digest")
+            ):
+                raise ValueError(
+                    f"{path}: validated-in-image requires image_instance_id or image_digest"
+                )
+
 
 def _display(value) -> str:
     if value is None or value == "":
@@ -146,6 +173,20 @@ def _hardware_summary(hardware: dict) -> str:
     return " · ".join(parts)
 
 
+def _base_images(items: list[dict]) -> str:
+    if not items:
+        return "未登记"
+    relations = {
+        "version-aligned": "版本对齐",
+        "validated-in-image": "镜像内验证",
+    }
+    return " · ".join(
+        f"[`{item['image_id']}`](base-images.md#{item['image_id']})"
+        f"（{relations[item['relation']]}）"
+        for item in items
+    )
+
+
 def _anchor(name: str) -> str:
     return name.replace("_", "-")
 
@@ -169,6 +210,7 @@ def render_index(locks: list[dict]) -> str:
         "| 硬件、系统、Python、软件包版本 | [configs/env/](../configs/env/) | 环境声明与 `check_env` 核对 |",
         "| 单次精度、性能和应用验证 | 算子 `REPORT.md`、`reports/` 与性能 JSON | 限定每条结论的适用范围 |",
         "| 算子 / 平台覆盖状态 | [算子 / 平台矩阵](operator-catalog.md) | 判断某平台是否已有交付算子 |",
+        "| 外部基座镜像线索 | [基座镜像索引](base-images.md) | 查看协作方镜像 tag 与分发状态 |",
         "",
         "核对当前运行时：",
         "",
@@ -205,6 +247,7 @@ def render_index(locks: list[dict]) -> str:
             f"| Python | `{_display(lock.get('python'))}` |",
             f"| 声明采集时间 | 软件栈 {collected_at} · 硬件快照 {hardware_at} |",
             f"| 环境锁 | [`{name}.lock.yaml`](../configs/env/{name}.lock.yaml) |",
+            f"| 基座镜像 | {_base_images(lock.get('base_images', []))} |",
             "",
             "适用范围：",
             "",

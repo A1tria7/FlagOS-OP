@@ -39,6 +39,11 @@
   profile 的硬件、系统、Python、厂商运行时和软件包版本索引，并声明
   CPU / NVIDIA / A100 与规划平台的证据边界；补齐 Ascend 环境锁，
   P800 锁增加 XMLIR / XTORCH_OPS 与硬件快照
+- 新增 [基座镜像索引](docs/base-images.md) 与
+  `configs/images/catalog.yaml` / `scripts/build_base_image_index.py`：
+  按 FlagRT runtime-team 镜像索引建立六平台协作视图，登记当前外部
+  基座 tag、用途、复现状态、分发方式和 FlagOS-OP 环境锁关系；平台方
+  可按 schema 追加历史版本或新镜像，并用 CI 校验生成页一致
 - 新增 [安装与 FlagGems 配合使用](docs/installation.md)：源码仓库
   `PYTHONPATH` 口径、FlagGems 运行时 / 源码共用方式、A1 注册示例、
   拦截计数、注册不可撤销与同算子冲突边界、常见 import / 命中问题；

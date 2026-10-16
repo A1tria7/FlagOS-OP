@@ -47,3 +47,6 @@ evidence:
     note: sdpa_math 三层验证与 P800 性能证据
   - path: ops/embedding/REPORT.md
     note: embedding 三层验证与 P800 性能证据
+base_images:
+  - image_id: kunlunxin-p800-operator-runtime-v2
+    relation: version-aligned

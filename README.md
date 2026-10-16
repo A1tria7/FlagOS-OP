@@ -57,19 +57,21 @@ python3 scripts/intake_validate.py --validate-only        # AI 生成算子契�
 | 1 | [安装与 FlagGems 配合使用](docs/installation.md) | 源码仓库安装 · FlagGems 共用 · A1 注册边界 |
 | 2 | [快速开始](docs/getting-started.md) | 5 分钟跑通第一格 |
 | 3 | [软硬件环境版本汇总](docs/environments.md) | 实测硬件 · 系统与软件栈 · 证据边界 |
-| 4 | [体系结构](docs/architecture.md) | 物理栈 · 开发级别 · 路线 · 3×3 矩阵 |
-| 5 | [全链路指南](docs/fullstack-guide.md) | 七步流水线 · 每步抽象动作 × 样例映射 |
-| 6 | [测试体系](docs/testing.md) | 验证层级 · 黄金 · 漂移 · 一致性 |
-| 7 | [性能回归追踪](docs/performance-regression.md) | 结构化记录 · 入库基线 · 双档门禁 |
-| 8 | [验收标准](docs/acceptance.md) | 精度/性能口径 · Must/Should 分级 · 重验 runbook |
-| 9 | [算子集成指南](docs/integration.md) | 交付路径选择 · FlagGems 贡献 · 分发开销实测 |
-| 10 | [AI 生成算子接入](docs/ai-intake.md) | KernelGen/KernelBench 产物 → 三级验证 |
-| 11 | [已知问题](docs/known-issues.md) | 19 条实测记录 + 检测方法 |
+| 4 | [基座镜像索引](docs/base-images.md) | 六平台协作镜像 · 版本线 · 分发状态 |
+| 5 | [体系结构](docs/architecture.md) | 物理栈 · 开发级别 · 路线 · 3×3 矩阵 |
+| 6 | [全链路指南](docs/fullstack-guide.md) | 七步流水线 · 每步抽象动作 × 样例映射 |
+| 7 | [测试体系](docs/testing.md) | 验证层级 · 黄金 · 漂移 · 一致性 |
+| 8 | [性能回归追踪](docs/performance-regression.md) | 结构化记录 · 入库基线 · 双档门禁 |
+| 9 | [验收标准](docs/acceptance.md) | 精度/性能口径 · Must/Should 分级 · 重验 runbook |
+| 10 | [算子集成指南](docs/integration.md) | 交付路径选择 · FlagGems 贡献 · 分发开销实测 |
+| 11 | [AI 生成算子接入](docs/ai-intake.md) | KernelGen/KernelBench 产物 → 三级验证 |
+| 12 | [已知问题](docs/known-issues.md) | 19 条实测记录 + 检测方法 |
 
 深入主题: [A1](docs/route-a1-aten.md) / [A2](docs/route-a2-dispatch.md) / [B](docs/route-b-vendor.md) 路线详解 ·
 [设备接入](docs/device-profiles.md) · [报告](docs/reporting.md) ·
 [性能回归](docs/performance-regression.md) · [AI 生成算子](docs/ai-intake.md) ·
 [软硬件环境版本汇总](docs/environments.md) ·
+[基座镜像索引](docs/base-images.md) ·
 [样例索引](examples/README.md)（15 个可运行样例 + 定位图）
 
 ## 仓库分区
@@ -78,7 +80,7 @@ python3 scripts/intake_validate.py --validate-only        # AI 生成算子契�
 |---|---|---|
 | [templates/](templates/) | **算子样板** + 报告模板 | 开发新算子的起点 |
 | [ops/](ops/) | **已开发算子**（样板同构，每个算子一个目录） | 开发完成、验证全绿后进入 |
-| [configs/](configs/) | 设备 profile 与实测环境锁 | 接入新平台、核对版本 |
+| [configs/](configs/) | 设备 profile · 实测环境锁 · 基座镜像索引 | 接入新平台、核对版本与协作镜像 |
 | [routes/](routes/) + [tests/](tests/) | 三路线正式实现 + 3×3 矩阵测试 | 实现稳定后合入 |
 | [examples/](examples/) | 15 个教学样例（按路线×层级定位） | 学习与对照 |
 | [intake/](intake/) + [perf/](perf/) | AI 生成算子通道 + 性能基线 | 自动化环节 |
