@@ -76,13 +76,19 @@ def main() -> None:
     dev = profile.torch_device
     os.environ["VLLM_FL_PLUGIN_MODULES"] = __name__
     os.environ["MYVENDOR_COUNT_FILE"] = cnt = "/tmp/myvendor_example_counts.json"
+    os.environ["VLLM_FL_PER_OP"] = "silu_and_mul=vendor:myvendor|reference"
     json.dump({}, open(cnt, "w"))
     print(f"[b-op 样例] 设备: {profile.summary()}")
 
     # ============ ②/③ 注册 + 选择 + 计数 + 精度 ============
     from vllm_fl.dispatch import get_default_manager, call_op
-    from vllm_fl.dispatch.policy import with_preference, with_allowed_vendors
+    from vllm_fl.dispatch.policy import (
+        reset_global_policy,
+        with_allowed_vendors,
+        with_preference,
+    )
 
+    reset_global_policy()
     m = get_default_manager()
     m.ensure_initialized()
     ids = [i.impl_id for i in

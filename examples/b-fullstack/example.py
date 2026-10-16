@@ -136,11 +136,17 @@ def stage_l2_dispatch(profile) -> bool:
     print("-" * 60)
 
     os.environ["VLLM_FL_PLUGIN_MODULES"] = "fullstack_plugin"
+    os.environ["VLLM_FL_PER_OP"] = "silu_and_mul=vendor:my-cpp|reference"
     sys.path.insert(0, str(HERE))
 
     from vllm_fl.dispatch import get_default_manager, call_op, reset_default_manager
-    from vllm_fl.dispatch.policy import with_preference, with_allowed_vendors
+    from vllm_fl.dispatch.policy import (
+        reset_global_policy,
+        with_allowed_vendors,
+        with_preference,
+    )
 
+    reset_global_policy()
     reset_default_manager()
     m = get_default_manager()
     m.ensure_initialized()
@@ -155,7 +161,9 @@ def stage_l2_dispatch(profile) -> bool:
         used = m._called_ops["silu_and_mul"]
     assert used == "vendor.my-cpp", used
     print(f"  选择: {used}（with_allowed_vendors 精确钉住）")
-    print("  （框架层将用 VLLM_FL_PER_OP=silu_and_mul=vendor:my-cpp|reference 达到同样效果）")
+    print("  （钉选经 VLLM_FL_PER_OP=silu_and_mul=vendor:my-cpp|reference——"
+          "平台 op_backends 钉序优先于 with_preference（known-issues #20），"
+          "框架层用同一机制）")
     return True
 
 

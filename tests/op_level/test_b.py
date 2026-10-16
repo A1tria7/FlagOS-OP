@@ -18,7 +18,10 @@ def run(profile) -> bool:
     # 避免上一个测试的插件残留/OpManager 缓存污染。
     os.environ["VLLM_FL_PLUGIN_MODULES"] = \
         "routes.b_vendor.backend.register_ops"
+    os.environ["VLLM_FL_PER_OP"] = "silu_and_mul=vendor:audit|reference"
     from vllm_fl.dispatch import reset_default_manager
+    from vllm_fl.dispatch.policy import reset_global_policy
+    reset_global_policy()
     reset_default_manager()
     print("=" * 60)
     print(f"B op-level [{profile.name}]: audit vendor @ {dev}")
