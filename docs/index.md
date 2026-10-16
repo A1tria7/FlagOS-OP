@@ -75,6 +75,7 @@ flowchart TB
 | 维护算子 / 平台矩阵 | [算子目录维护指南](operator-catalog.md)（六平台增量口径） |
 | 理解每层验证 | [测试体系](testing.md) |
 | 追踪性能回归 | [性能回归追踪](performance-regression.md) |
+| 查 FlagGems 5.0 兼容性复测结论 | [FlagGems 5.0 复测（P800）](flaggems5-p800-retest.md) |
 | 接入 AI 生成的算子 | [AI 生成算子接入](ai-intake.md) |
 | 接入新芯片 | [设备接入](device-profiles.md) |
 | 写开发报告 | [报告指南](reporting.md) |

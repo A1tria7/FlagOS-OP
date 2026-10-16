@@ -1,0 +1,246 @@
+# FlagGems 5.0 兼容性复测（P800 / 昆仑芯）
+
+[← 返回文档中心](index.md)
+
+本页记录仓库 P800 算子成果在 **FlagGems 5.0 栈**上的兼容性复测：范围、
+数据、暴露的问题与修复状态。问题条目与检测方法见
+[已知问题清单](known-issues.md)，性能口径见
+[性能回归追踪](performance-regression.md)。
+
+| 项 | 值 |
+|---|---|
+| 日期 | 2026-10-16 |
+| 容器 | `flagos-p800-gems5-vllm0202-dev` |
+| 被测仓库 | FLAG-OP/FlagOS-OP @ `4d42567`（复测在 `docs/flaggem5-p800-retest` 分支进行） |
+| 对照基线 | 仓库内 4.2.1rc0 环境锁的报告 / 黄金 / `perf/baselines` |
+| 硬件 | Kunlunxin P800 OAM ×8（测试用空闲卡，`xpu-smi` 确认） |
+| 总结论 | **正确性与 4.2 完全一致；推理/生成性能一致；训练收益收窄（xtorch_ops/plugin 变化，非 FlagGems）；4 处适配问题，3 处已修** |
+
+## 1. 环境对照
+
+`scripts/check_env.py --device p800-kunlunxin` 实测：
+
+| 包 | 4.2 锁定 | 当前 5.0 | 判定 |
+|---|---|---|---|
+| torch | 2.9.0+cu129 | 2.9.0+cu129 | ✓ |
+| torch_xmlir | 1.0.0.1 | 1.0.0.1 | ✓ |
+| python | 3.10.18 | 3.10.18 | ✓ |
+| **flag_gems** | 4.2.1rc0 | **5.0.0** | ✗ 预期 |
+| **vllm** | 0.13.0 | **0.20.2+empty** | ✗ 预期 |
+| **vllm_fl** | 0.1.0 | **0.2.0+g38e7dbc** | ✗ 预期 |
+| **xtorch_ops** | 0.1.2640+9bc36a18 | **0.1.2935+50a5d6a4** | ✗ 需注意 |
+| triton | 3.0.0+03c4c9be | 3.0.0+f69a5406 | ✗ 构建号 |
+| transformers | 4.57.1 | 4.57.6 | ✗ 轻微 |
+
+FlagOS-OP 的 P800 算子（embedding / sdpa / sdpa_math）生产路径为
+**A1 aten 拦截（`AutogradCUDA`）+ 厂商委托**（`index_select` /
+`aten._scaled_dot_product_efficient_attention`）；应用层测试仅启用
+`flag_gems.only_enable(include=["gelu"])`，不接管 sdpa/embedding 本体。
+FlagGems 4.2→5.0 对这三个算子的数值路径几乎无直接影响，主要风险在
+**vllm-plugin-FL 0.2.0 分发策略**与 **xtorch_ops 版本**——复测证实这两处，
+见 §4。
+
+## 2. 正确性：与 4.2 完全一致
+
+### 2.1 三层测试（`example.py` 一键）
+
+| 算子 | 层级 | 结果 |
+|---|---|---|
+| embedding | kernel | 20 前向 + 6 反向，FP32/FP16/BF16 全部 err=0 |
+| embedding | A1 op | 拦截 5 次；hooked=direct 逐位；dense/scale_freq grad err=0 |
+| embedding | 应用层 | nn.Embedding+MLP；logits/grad diff=0；贪心一致率 1.00 |
+| sdpa | kernel | 37 case，max_err=3.9e-3（bf16 容差内） |
+| sdpa | A1 op | 注册=直调逐位；vs native max_diff=0；grad 检查通过 |
+| sdpa | 应用层 | mini-decoder 4L；logits diff=0；top1=1.00 |
+| sdpa_math | kernel | 52 case，max_err=1.95e-3 / P 3.91e-3；哨兵/dropout/错误路径全过 |
+| sdpa_math | A1 op | 22 项（含 6 组 gradcheck、F.sdpa(MATH) 拦截、fused backward） |
+| sdpa_math | 应用层 | intercept=21；logits/∇ L∞=0；贪心一致率 1.00 |
+
+### 2.2 黄金精度
+
+| 算子 | 组数 | 5.0 结果 | 4.2 报告 | 对齐 |
+|---|---|---|---|---|
+| embedding | 174 | **174/174, worst=0** | 174/174, worst=0 | ✓ 逐位 |
+| sdpa_math | 175 | **175/175, worst=3.906e-3** | 175/175, worst=3.91e-3 | ✓ |
+| sdpa | 397 | **397/397, worst=4.25e-3** | （同容差口径） | ✓ |
+
+### 2.3 FlagGems 5.0 API 兼容与单测
+
+- `flag_gems.only_enable(include=["gelu"])` ✓；enable 后
+  `flag_gems.current_work_registrar.include_ops` 非 None ✓
+- FlagGems gelu（bf16）vs native：L∞=0
+- 5.0 打印 `Overriding a previously registered kernel ... aten::gelu`
+  警告——属正常覆盖，非错误
+- `pytest tests/unit -q` → **44 passed**
+
+### 2.4 e2e 数值（vLLM 栈 mini-LLM，与 4.2 同种子逐项相同）
+
+| 指标 | 4.2 报告 | 5.0 复测 |
+|---|---|---|
+| logits_linf | 0.015625 | **0.015625** |
+| top1_rate | 0.99375 | **0.99375** |
+| entropy_abs | 8.816719055175781e-4 | **相同** |
+| greedy_sequence_match | True | **True** |
+| embedding_grad | 1.526e-05 | **1.526e-05** |
+| q0_grad / head_grad | 3.81e-6 / 1.8311e-4 | **相同** |
+| A1 拦截次数 | 936 | **936** |
+
+## 3. 性能
+
+### 3.1 微基准（空闲卡）
+
+| 基准 | 5.0 实测 | 4.2 基线/报告 | 判定 |
+|---|---|---|---|
+| sdpa_math direct | 1.34–2.17x native | 1.46–2.21x | ✓ |
+| sdpa_math A1 | 1.16–2.12x | 1.31–2.17x | ✓ |
+| embedding 大 shape | 与 native parity；Triton 慢数十倍 | 同结论 | ✓ |
+| embedding backward 16k | ours≈native 1.001x | 0.976x | ✓ |
+| sdpa triton 探针 | 仍慢于 native | 同结论 | ✓ |
+
+### 3.2 e2e 性能与归因（空闲卡，两次采样）
+
+| case | 4.2 speedup | 5.0 speedup | 判定 |
+|---|---|---|---|
+| forward_b1_s256 | 1.077x | 1.06–1.08x | ✓ 一致 |
+| forward_b2_s128 | 1.074x | 1.07–1.10x | ✓ 一致 |
+| generate8_b1_s96 | 1.088x | 1.04–1.15x | ✓ 一致 |
+| train_out_b1_s128 | 1.452x | 0.94–1.01x | ↓ 收窄 |
+| train_probs_b1_s128 | 1.484x | 0.75–0.92x | ↓ 收窄 |
+| fused bwd A/B (out) | 1.499x | 1.03–1.20x | ↓ 收窄 |
+
+**归因**：sdpa_math P800 fast path 走厂商
+`aten._scaled_dot_product_efficient_attention`（torch_xmlir /
+xtorch_ops），与 FlagGems 无关；训练路径偏移随 **xtorch_ops
+0.1.2640→0.1.2935** 出现。建议锁定 xtorch_ops 版本后重跑
+`e2e_flagos.py` 刷新 `perf/baselines/p800-kunlunxin.json` 训练相关 case。
+
+**卡状态警告**：占用卡（如当时 100% util 的物理 XPU2）上 forward 掉到
+0.78–0.85x、fused backward 倒挂——性能结论必须以空闲卡数据为准；物理
+XPU1 另见 [known-issues #5](known-issues.md) 的 Xid 补注，复测避开
+`cuda:0`。
+
+## 4. 路线样例与矩阵复测
+
+| 项 | 结果 | 说明 |
+|---|---|---|
+| `examples/a1-op` | **PASS** | 移除模块级 `from __future__ import annotations` 后（#22） |
+| `examples/a2-op` | 精度 9/9 PASS；**stage2 FAIL** | #23（本轮仅记录，不改代码） |
+| `examples/b-op` | **PASS** | #20 修复：`VLLM_FL_PER_OP` 钉 `vendor:myvendor` 实测命中 |
+| `examples/b-fullstack` | stage1/2 **PASS**；stage3 未复测 | stage2 按 #20 钉 `vendor:my-cpp`；stage3 受冒烟模型缺口（§5.5） |
+| `tests/op_level/test_b` | **PASS** | #20 修复后选中 `vendor:audit` |
+| `tests/op_level/test_a2` | **FAIL** | #23：内置 `gelu_and_mul` 冲突，TypeError |
+| `run.py --consistency` | **FAIL** | #23（跨层一致性收尾格） |
+| `run.py --level framework` 各格 | 未复测 | 冒烟模型缺口 → HFValidationError（§5.5） |
+| `ops/embedding/script/bench_perf.py` | **PASS**（含 scale 行） | #21 修复后 `scale_grad_by_freq=true` 行记 `native_error` 不再崩溃 |
+| `pytest tests/unit` | 44 passed | — |
+
+## 5. 发现与修复
+
+### 5.1 插件平台配置钉序覆盖 `with_preference`（已修）
+
+vllm-plugin-FL 0.2.0+ 的 `dispatch/config/kunlunxin.yaml` 含
+`op_backends.silu_and_mul: [flagos, vendor, reference]`，在
+`_resolve_impl` 中**优先于** `with_preference("vendor")`——B 路线钉
+vendor 的旧写法失效，选中 `default.flagos`。修复：
+`VLLM_FL_PER_OP=silu_and_mul=vendor:<name>|reference` +
+`reset_global_policy()`，已落地 `tests/op_level/test_b.py`、
+`examples/b-op`、`examples/b-fullstack`（stage2）。详见
+[known-issues #20](known-issues.md)。
+
+### 5.2 embedding bench 容错缺口（已修）
+
+`scale_grad_by_freq=true` 时原生 `aten.embedding_backward` 抛
+`ValueError`（非 RuntimeError），脚本原 `except RuntimeError` 漏接导致
+崩溃。已改为 `except (RuntimeError, ValueError)`，该行记
+`native_error`。4.2 报告该行 native 空值同因。详见
+[known-issues #21](known-issues.md)。
+
+### 5.3 FlagGems 5.0 pointwise codegen 回归（样例侧规避）
+
+5.0 的 `_collect_jit_deps` 把模块级 `from __future__ import annotations`
+拷进生成文件中部 → `SyntaxError`。`examples/a1-op`、`examples/a2-op`
+已移除模块级 future import；根治在 FlagGems 侧。详见
+[known-issues #22](known-issues.md)。
+
+### 5.4 A2 插件与内置 backend impl_id 冲突（仅记录）
+
+插件 `v0.1.0+` 内置注册 `gelu_and_mul` 的 `default.flagos` /
+`reference.torch`（packed 单张量协议）；A2 演示插件同名双张量注册被
+`Duplicate impl_id` 整体拒绝。受影响：`tests/op_level/test_a2`、
+`run.py --consistency`、`examples/a2-op` stage2（及模型缺口解封后的
+`tests/framework_level/test_a2` / `examples/a2-framework`）。按本轮决策
+**仅文档记录**，修复方向见 [known-issues #23](known-issues.md)。
+
+### 5.5 框架层冒烟模型缺口（环境，待补）
+
+设备 profile 声明的 `model_path`
+（`/workspace/random-llm-models/llama-3.1-8b-like`）**在本容器不存在**
+——`run.py --level framework` 各格与 `examples/b-fullstack` stage3 均在
+vLLM 启动时 `HFValidationError`，本轮无法复测。仓内仅有
+`/models/random-qwen3-tiny`（Qwen3 4L，`max_position_embeddings=512`）：
+架构与 profile `engine_args`（`max_model_len=4096`）不兼容，且黄金按
+llama-like 模型生成，**不能替代**。可用 `FLAGOS_MODEL_PATH` 换模型路径，
+但黄金需在同模型上重新生成后再比对。补回原模型或重建黄金后回填本页。
+
+## 6. 复测命令清单
+
+```bash
+# 环境核对
+python3 scripts/check_env.py --device p800-kunlunxin
+
+# 先 xpu-smi 确认空闲卡（本复测用 5,6 号卡）
+export CUDA_VISIBLE_DEVICES=5,6
+
+# 算子三层一键（embedding / sdpa / sdpa_math 同构）
+cd ops/sdpa_math && python3 example.py p800-kunlunxin
+
+# 黄金
+python3 script/gen_golden.py
+python3 script/check_accuracy.py --impl p800 --device cuda:1   # 双卡可见时
+# 单卡可见（CUDA_VISIBLE_DEVICES=5）时用 --device cuda:0
+
+# 微基准（脚本无 --register 参数）
+python3 script/bench_perf.py --device cuda:1 --json-out reports/perf_p800-kunlunxin.json
+
+# vLLM 栈 E2E
+python3 script/e2e_flagos.py --device cuda:0 --dtype bfloat16
+
+# 单测与矩阵
+cd ../.. && python3 -m pytest tests/unit -q
+python3 run.py --consistency
+python3 run.py --level framework     # 需冒烟模型（§5.5）
+
+# 路线样例
+python3 examples/a1-op/example.py p800-kunlunxin
+python3 examples/a2-op/example.py p800-kunlunxin     # stage2 现 FAIL（#23）
+python3 examples/b-op/example.py p800-kunlunxin
+python3 examples/b-fullstack/example.py p800-kunlunxin
+python3 tests/op_level/test_b.py p800-kunlunxin
+```
+
+**设备可见性**：容器默认 `CUDA_VISIBLE_DEVICES=1,2`（仅 `cuda:0/1`）；
+profile 默认 `torch_device: cuda:1`；单卡可见时用 `*_TEST_DEVICE=cuda:0`
+覆盖，否则报 `invalid device ordinal`。复测原始 JSON 留档于复测容器
+`/work/logs/`（未入库）。
+
+## 7. 结论
+
+| 维度 | 4.2 → 5.0 |
+|---|---|
+| 算子数值 / 黄金 / A1 拦截 | **完全一致** |
+| 应用层贪心序列 / 梯度 | **逐位一致** |
+| 推理 / 生成 E2E | **一致** |
+| 训练 E2E / fused backward | 收益收窄（xtorch_ops/plugin 变化，非 FlagGems） |
+| FlagGems API（only_enable / gelu） | **兼容** |
+| 仓库样例 / 测试 / 脚本 | 3 处已修（#20/#21/#22）+ 1 处仅记录（#23） |
+| 框架层矩阵 | 未复测（冒烟模型缺口，§5.5） |
+
+**FlagOS-OP 昆仑芯算子成果在 FlagGems 5.0 栈上正确性稳定一致，可继续
+作为 P800 算子开发基线使用。** 性能基线建议在锁定 xtorch_ops 与空闲卡
+条件下重标；框架层矩阵待补冒烟模型后回填。
+
+---
+
+**下一步**: [已知问题](known-issues.md)（#20–#23 排障细节）·
+[全链路指南](fullstack-guide.md)（七步流水线）·
+[性能回归追踪](performance-regression.md)（基线更新规范）

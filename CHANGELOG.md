@@ -20,6 +20,13 @@
   连续调用链对比 native、direct kernel、FlagGems + 多算子 A1 混合映射，
   并以子进程隔离 baseline 与注册路径、用 counter 验证命中；CPU CI 增加
   import 与 `--help` smoke test，硬件路径仍按算子 profile 复验
+- 新增 [FlagGems 5.0 兼容性复测（P800）](docs/flaggems5-p800-retest.md)：
+  环境对照、三层与黄金、微基准与 e2e 性能、路线样例矩阵、发现与修复
+  状态与复现命令——正确性与 4.2 完全一致、推理/生成一致、训练收益收窄
+  归因 xtorch_ops/plugin；补记框架层冒烟模型缺口（待回填）；
+  known-issues 新增 #20-#23（插件 per_op_order 覆盖钉选、bench
+  ValueError 容错、FlagGems 5.0 pointwise codegen `__future__` 回归、
+  A2 插件与内置 backend impl_id 冲突）与 #5 的 XPU1 Xid 补注
 
 ### Changed
 - 文档统一区分 C0 契约、C1 最小消费者和 C2 真实引擎证据等级；framework
@@ -53,6 +60,15 @@
   `ops.sdpa.p800.forward` SKIP；改为包态相对导入优先并保留单算子
   脚本 fallback。`perf_run` 会先清理本次选中用例的旧记录，且任一
   SKIP 直接返回失败，避免 compare 消费历史 JSON 形成“假绿”
+- **FlagGems 5.0 复测适配（known-issues #20/#21/#22）**：
+  `tests/op_level/test_b`、`examples/b-op`、`examples/b-fullstack`(stage2)
+  改用 `VLLM_FL_PER_OP` + `reset_global_policy()` 钉住 silu_and_mul 的
+  vendor 实现，对抗插件 0.2.0 平台 `op_backends` 钉序（修复前选中
+  `default.flagos`）；`ops/embedding/script/bench_perf.py` 容错扩为
+  `except (RuntimeError, ValueError)`，`scale_grad_by_freq=True` 原生
+  `ValueError` 不再崩整个基准（记 `native_error`）；`examples/a1-op`、
+  `examples/a2-op` 移除模块级 `from __future__ import annotations`，
+  规避 FlagGems 5.0 pointwise_dynamic codegen SyntaxError
 
 ### Added
 - **sdpa_math 第二平台: p800-kunlunxin**（vendor O/LSE + exact-P + A1）
