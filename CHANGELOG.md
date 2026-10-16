@@ -70,6 +70,10 @@
   `reference` 遮蔽约束；backend 导入回归测试同步覆盖 P800 与 MLU
 
 ### Fixed
+- 环境与基座索引复核修正：embedding 的 MLU 证据归入匹配的
+  `mlu590` 环境锁；PPU 镜像引用补全 Harbor registry / namespace；
+  环境锁与镜像 catalog 增加双向关系校验；历史镜像保留稳定文档锚点；
+  Ascend 不可用范围收窄为真实 vLLM 入口
 - catalog foundation 算子的 route 校验与文档契约对齐：顶层 route 与
   “每个平台条目均声明 route”两种形式均可用；贡献指南改为维护
   `ops/catalog.yaml` 并重新生成 `ops/README.md`

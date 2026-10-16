@@ -42,12 +42,19 @@ def _require_string_list(value, name: str) -> list[str]:
     return value
 
 
-def validate_locks(locks: list[dict], root: Path = ROOT) -> None:
+def validate_locks(
+    locks: list[dict], root: Path = ROOT, image_catalog: dict | None = None
+) -> None:
     if not locks:
         raise ValueError("configs/env must contain at least one environment lock")
 
     operator_catalog = yaml.safe_load((root / "ops" / "catalog.yaml").read_text())
     valid_families = set(operator_catalog["platform_families"])
+    if image_catalog is None:
+        image_catalog = yaml.safe_load(
+            (root / "configs" / "images" / "catalog.yaml").read_text()
+        )
+    known_images = {item["id"]: item for item in image_catalog["images"]}
     names: set[str] = set()
 
     for lock in locks:
@@ -122,10 +129,6 @@ def validate_locks(locks: list[dict], root: Path = ROOT) -> None:
         base_images = lock.get("base_images", [])
         if not isinstance(base_images, list):
             raise ValueError(f"{path}: base_images must be a list")
-        image_catalog = yaml.safe_load(
-            (root / "configs" / "images" / "catalog.yaml").read_text()
-        )
-        known_images = {item["id"]: item for item in image_catalog["images"]}
         for item in base_images:
             if not isinstance(item, dict):
                 raise ValueError(f"{path}: base_images items must be mappings")
@@ -139,6 +142,16 @@ def validate_locks(locks: list[dict], root: Path = ROOT) -> None:
                 raise ValueError(f"{path}: unknown base image {image_id!r}")
             if known_images[image_id]["family"] != family:
                 raise ValueError(f"{path}: base image family does not match {image_id}")
+            image = known_images[image_id]
+            if name not in image.get("related_profiles", []):
+                raise ValueError(
+                    f"{path}: base image {image_id!r} does not declare profile {name!r}"
+                )
+            if image.get("flagos_op_relation") != relation:
+                raise ValueError(
+                    f"{path}: base image {image_id!r} relation does not match "
+                    f"{relation!r}"
+                )
             if relation == "validated-in-image" and not (
                 item.get("image_instance_id") or item.get("image_digest")
             ):

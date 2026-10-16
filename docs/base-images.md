@@ -36,7 +36,7 @@ revision `74197bf7d4b5dc8cdd3b2b89b15ac3561936dda6`，读取时间 2026-10-16。
 | 华为昇腾 | 昇腾 910C 训练腿<br>`ascend-operator-runtime-comm` / `v3` | `flagrt/ascend-operator-runtime-comm:2.0.0-flagtree3.5-routeA-cann9.0-py311-torch2.10-flagcx0.13.0g4e0e0cb-arm64` | 部分可复现 | 离线发布 | 未接入 FlagOS-OP 环境锁 |
 | 华为昇腾 | 昇腾 910C 推理腿<br>`ascend-infer-vllm` / `v1` | `quay.io/ascend/vllm-ascend:v0.20.2rc1-a3` | 登记式基座 | 公开 registry | 未接入 FlagOS-OP 环境锁 |
 | 昆仑芯 | 昆仑芯 P800 算子运行时基座<br>`kunlun-operator-runtime` / `v2` | `flagrt/kunlun-operator-runtime:2.0.0-xpu3.6-py310-torch2.9-flagtree0.6.1-flaggems73c5aff1-x86_64` | 外部可复现构建 | 内部构建 | 版本对齐；未声明同镜像实例 |
-| 平头哥 | 平头哥 PPU 运行时基座<br>`thead-ppu-runtime` / `v1` | `flagtree-ppu-py312-torch2.10.0-sdk2.1.0-cu130-ubuntu24.04:202607-3.6-base` | 登记式基座 | 公开 registry | 平台算子矩阵仍为 planned |
+| 平头哥 | 平头哥 PPU 运行时基座<br>`thead-ppu-runtime` / `v1` | `harbor.baai.ac.cn/flagtree/flagtree-ppu-py312-torch2.10.0-sdk2.1.0-cu130-ubuntu24.04:202607-3.6-base` | 登记式基座 | 公开 registry | 平台算子矩阵仍为 planned |
 | 寒武纪 | 寒武纪 MLU590 运行时基座<br>`cambricon-mlu-runtime` / `v1` | `harbor.baai.ac.cn/flagos-runtime/flagos-runtime-cambricon-neuware4.4.3:2.2.0` | 登记式基座 | 公开 registry | 未接入 FlagOS-OP 环境锁 |
 
 ### 平台说明

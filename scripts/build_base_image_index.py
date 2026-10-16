@@ -45,7 +45,9 @@ def _require_string_list(value, name: str) -> list[str]:
     return value
 
 
-def validate_catalog(catalog: dict, root: Path = ROOT) -> None:
+def validate_catalog(
+    catalog: dict, root: Path = ROOT, env_locks: dict[str, dict] | None = None
+) -> None:
     if catalog.get("schema") != EXPECTED_SCHEMA:
         raise ValueError(f"schema must be {EXPECTED_SCHEMA}")
     if not DATE_PATTERN.match(_require_string(catalog.get("updated"), "updated")):
@@ -134,9 +136,12 @@ def validate_catalog(catalog: dict, root: Path = ROOT) -> None:
                 raise ValueError(
                     f"{image_id}: related profile {profile!r} lacks an environment lock"
                 )
-            env_lock = yaml.safe_load(
-                (root / "configs" / "env" / f"{profile}.lock.yaml").read_text()
-            )
+            if env_locks is None:
+                env_lock = yaml.safe_load(
+                    (root / "configs" / "env" / f"{profile}.lock.yaml").read_text()
+                )
+            else:
+                env_lock = env_locks[profile]
             relations = {
                 item.get("image_id"): item.get("relation")
                 for item in env_lock.get("base_images", [])
@@ -298,7 +303,8 @@ def render_index(catalog: dict) -> str:
             reason = image.get("archival_reason")
             outcome = f"`{successor}`" if successor else _display(reason)
             lines.append(
-                f"| {_family_display(image['family'], operator_catalog)} | "
+                f"| <a id=\"{image['id']}\"></a>"
+                f"{_family_display(image['family'], operator_catalog)} | "
                 f"`{image['series']}` / `{image['version']}` | "
                 f"`{_display(image['registry_reference'])}` | "
                 f"{_status_display(image['status'])} | {outcome} |"

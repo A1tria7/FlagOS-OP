@@ -26,9 +26,9 @@ packages:
   flag_gems: "5.3.5"
   vllm: "0.20.2+empty"
 notes: |-
-  vLLM 为空壳安装，框架级与应用级入口不可用；ops/sdpa 交付使用
-  kernel 层、op 层、黄金与性能对照收口。共享 8 卡服务器的绝对延迟
-  存在 ±15µs 级扰动。
+  vLLM 为空壳安装，真实 vLLM 框架级与应用级入口不可用；ops/sdpa
+  使用 kernel 层、op 层、黄金与性能对照收口，并包含 mini-decoder
+  应用验证。共享 8 卡服务器的绝对延迟存在 ±15µs 级扰动。
 evidence:
   - path: ops/sdpa/reports/development.md
     note: 环境声明与实现报告

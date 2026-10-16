@@ -10,7 +10,6 @@ family: cambricon
 scope:
   - "13 个基础 ATen 算子的 PR #25 契约复验"
   - 真实 vLLM 注入链路复验
-  - ops/embedding Cambricon backend
 hardware:
   model: MLU590-M9
   count: 8
@@ -45,7 +44,5 @@ historical_note: |-
 evidence:
   - path: ops/clone/REPORT.md
     note: 基础 ATen 算子契约复验入口
-  - path: ops/embedding/reports/cambricon.md
-    note: embedding Cambricon 平台报告
   - path: ops/type_as/reports/development.md
     note: 基础算子原始交付历史环境

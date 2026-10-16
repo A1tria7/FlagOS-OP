@@ -64,7 +64,7 @@ python3 scripts/build_env_index.py --check
 - [ops/sdpa/reports/development.md](../ops/sdpa/reports/development.md)：环境声明与实现报告
 - [ops/sdpa/reports/performance.md](../ops/sdpa/reports/performance.md)：性能环境与结果
 
-备注：vLLM 为空壳安装，框架级与应用级入口不可用；ops/sdpa 交付使用 kernel 层、op 层、黄金与性能对照收口。共享 8 卡服务器的绝对延迟 存在 ±15µs 级扰动。
+备注：vLLM 为空壳安装，真实 vLLM 框架级与应用级入口不可用；ops/sdpa 使用 kernel 层、op 层、黄金与性能对照收口，并包含 mini-decoder 应用验证。共享 8 卡服务器的绝对延迟存在 ±15µs 级扰动。
 
 <a id="cambricon"></a>
 ### Cambricon MLU 本地实测版本（v26.08.0 容器）
@@ -84,7 +84,6 @@ python3 scripts/build_env_index.py --check
 
 - 13 个基础 ATen 算子的 PR #25 契约复验
 - 真实 vLLM 注入链路复验
-- ops/embedding Cambricon backend
 
 | 软件包 / 组件 | 锁定版本 |
 |---|---|
@@ -99,7 +98,6 @@ python3 scripts/build_env_index.py --check
 证据入口：
 
 - [ops/clone/REPORT.md](../ops/clone/REPORT.md)：基础 ATen 算子契约复验入口
-- [ops/embedding/reports/cambricon.md](../ops/embedding/reports/cambricon.md)：embedding Cambricon 平台报告
 - [ops/type_as/reports/development.md](../ops/type_as/reports/development.md)：基础算子原始交付历史环境
 
 备注：容器 cambricon-base/pytorch:v26.08.0-torch2.12.1-torchmlu1.34.1-ubuntu24.04-py312 （Neuware 4.7.6，driver 6.2.29）。flag_gems 为本地 FlagGems main 的 editable 安装（SETUPTOOLS_SCM_PRETEND_VERSION=5.0.2，仓库无 tag）。 容器内已装 vLLM 0.25.1+empty / vllm_mlu 0.25.1+mlu0.16.0.pt212（MLUPlatform）， 应用层可跑真实 vLLM（见 ops/<op>/test/framework_level.py）。
@@ -123,6 +121,7 @@ python3 scripts/build_env_index.py --check
 适用范围：
 
 - ops/sdpa MLU590 backend
+- ops/embedding Cambricon backend（算子运行 profile 为 cambricon）
 - mini-decoder 应用层验证
 
 | 软件包 / 组件 | 锁定版本 |
@@ -134,6 +133,7 @@ python3 scripts/build_env_index.py --check
 
 证据入口：
 
+- [ops/embedding/reports/cambricon.md](../ops/embedding/reports/cambricon.md)：embedding Cambricon 平台环境与验证报告
 - [reports/examples/sdpa_mlu590_report.md](../reports/examples/sdpa_mlu590_report.md)：SDPA MLU590 环境与实现报告
 - [reports/examples/sdpa_mlu590_test_report.md](../reports/examples/sdpa_mlu590_test_report.md)：SDPA MLU590 测试报告
 

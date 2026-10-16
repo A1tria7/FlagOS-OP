@@ -79,7 +79,7 @@ images:
     series: thead-ppu-runtime
     version: v1
     use: 平头哥 PPU 运行时基座
-    registry_reference: flagtree-ppu-py312-torch2.10.0-sdk2.1.0-cu130-ubuntu24.04:202607-3.6-base
+    registry_reference: harbor.baai.ac.cn/flagtree/flagtree-ppu-py312-torch2.10.0-sdk2.1.0-cu130-ubuntu24.04:202607-3.6-base
     status: registered
     distribution: public-registry
     current: true
