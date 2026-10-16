@@ -17,6 +17,8 @@ jobs:
         run: pip install pyyaml -q
       - name: 算子目录一致性检查
         run: python3 scripts/build_ops_index.py --check
+      - name: 环境版本汇总一致性检查
+        run: python3 scripts/build_env_index.py --check
 
   ops-packaging:
     runs-on: ubuntu-latest
@@ -139,6 +141,7 @@ jobs:
           fails = []
           files = (
               glob.glob('configs/devices/*.yaml')
+              + glob.glob('configs/env/*.yaml')
               + glob.glob('inputs/*.yaml')
               + ['.github/workflows/ci.yml', 'ops/catalog.yaml']
           )

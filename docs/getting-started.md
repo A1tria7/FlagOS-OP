@@ -13,7 +13,7 @@
 | 需要什么 | 说明 |
 |---|---|
 | FlagOS 生态 | FlagGems / vllm-plugin-FL / vLLM / Triton（版本随共享镜像提供） |
-| 版本核对 | `python3 scripts/check_env.py --device p800-kunlunxin --require-model`；锁定值见 [环境锁文件](../configs/env/p800-kunlunxin.lock.yaml) |
+| 版本核对 | `python3 scripts/check_env.py --device p800-kunlunxin --require-model`；各平台声明见 [软硬件环境版本汇总](environments.md) |
 | 设备 profile | `configs/devices/` 下有你的芯片 YAML（参考实例 p800-kunlunxin；新芯片[4 步接入](device-profiles.md)） |
 
 ## 5 分钟流程

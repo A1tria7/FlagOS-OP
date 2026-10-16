@@ -47,6 +47,9 @@ python3 scripts/build_ops_index.py --check
 - [ ] 声明 `vendor_kernels`（含哨兵负例）
 - [ ] 生成[黄金](docs/testing.md#golden) + 跑[漂移实验](docs/testing.md#drift)建立基线
 - [ ] 用[哨兵检查](docs/testing.md#sentinel)建立该设备的已知问题清单
+- [ ] 新增 `configs/env/<profile>.lock.yaml`，运行
+      `python3 scripts/build_env_index.py` 更新
+      [软硬件环境版本汇总](docs/environments.md)
 
 ### 修改核心测试
 

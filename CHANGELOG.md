@@ -34,6 +34,11 @@
 ## [Unreleased]
 
 ### Added
+- 新增 [软硬件环境版本汇总](docs/environments.md) 与
+  `scripts/build_env_index.py`：从 `configs/env/*.lock.yaml` 生成各实测
+  profile 的硬件、系统、Python、厂商运行时和软件包版本索引，并声明
+  CPU / NVIDIA / A100 与规划平台的证据边界；补齐 Ascend 环境锁，
+  P800 锁增加 XMLIR / XTORCH_OPS 与硬件快照
 - 新增 [安装与 FlagGems 配合使用](docs/installation.md)：源码仓库
   `PYTHONPATH` 口径、FlagGems 运行时 / 源码共用方式、A1 注册示例、
   拦截计数、注册不可撤销与同算子冲突边界、常见 import / 命中问题；
