@@ -1,0 +1,36 @@
+# Ascend 910 实测环境锁定（来源: ops/sdpa/reports/development.md）
+#
+# 用途: 在同构 Ascend 环境核对软件栈
+#       python3 scripts/check_env.py --device ascend910
+name: ascend910
+schema: 1
+description: Ascend 910_9382 SDPA 交付环境
+collected_at: "2026-09-16"
+family: ascend
+scope:
+  - ops/sdpa Ascend 910 backend
+hardware:
+  model: Ascend 910_9382
+  count: 8
+  memory_per_device: 64 GB HBM
+  compute: 24 AICore/卡 @ 1800MHz
+  runtime: "CANN 9.0.0（V100R001C10SPC001B250）"
+system:
+  os: openEuler aarch64
+  kernel: 5.10.0-216
+python: "3.11.15"
+packages:
+  torch: "2.10.0+cpu"
+  torch_npu: "2.10.0"
+  triton: "3.5.1"
+  flag_gems: "5.3.5"
+  vllm: "0.20.2+empty"
+notes: |-
+  vLLM 为空壳安装，真实 vLLM 框架级与应用级入口不可用；ops/sdpa
+  使用 kernel 层、op 层、黄金与性能对照收口，并包含 mini-decoder
+  应用验证。共享 8 卡服务器的绝对延迟存在 ±15µs 级扰动。
+evidence:
+  - path: ops/sdpa/reports/development.md
+    note: 环境声明与实现报告
+  - path: ops/sdpa/reports/performance.md
+    note: 性能环境与结果

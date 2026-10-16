@@ -86,6 +86,9 @@ PY
 python3 scripts/check_env.py --device p800-kunlunxin
 ```
 
+已登记的 Ascend、Cambricon、Kunlunxin 实测环境见
+[软硬件环境版本汇总](environments.md)。
+
 P800 锁定文件明确记录：FlagGems 和 `vllm-plugin-fl` 来自共享镜像本地
 路径，不建议随意用 pip 覆盖安装。
 

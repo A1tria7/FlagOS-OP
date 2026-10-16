@@ -117,6 +117,8 @@ AI 生成产物的进入方式见 [AI 生成算子接入](ai-intake.md)。
 flagos-op-templates/
 ├── run.py                    统一矩阵入口（--route/--level/--device/--all/--consistency）
 ├── configs/devices/          [设备 profile](device-profiles.md)
+├── configs/env/              [实测环境锁](environments.md)
+├── configs/images/           [基座镜像索引](base-images.md)
 ├── docs/                     本文档
 ├── common/                   设备抽象 / [kernel spec](route-b-vendor.md#kernelspec) / 输入模板
 │                            / 参考实现 / [性能基准 harness](performance-regression.md)
