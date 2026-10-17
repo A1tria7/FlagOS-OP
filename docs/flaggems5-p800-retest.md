@@ -11,14 +11,18 @@
 |---|---|
 | 日期 | 2026-10-16 |
 | 容器 | `flagos-p800-gems5-vllm0202-dev` |
-| 被测仓库 | FLAG-OP/FlagOS-OP @ `4d42567`（复测在 `docs/flaggem5-p800-retest` 分支进行） |
+| 被测仓库 | FLAG-OP/FlagOS-OP；`baseline_commit: 4d42567`（基线对照点），`tested_commit: 待回填`（最终推送前更新为实际复测 commit） |
+| 复测分支 | `docs/flaggems5-p800-retest` |
 | 对照基线 | 仓库内 4.2.1rc0 环境锁的报告 / 黄金 / `perf/baselines` |
 | 硬件 | Kunlunxin P800 OAM ×8（测试用空闲卡，`xpu-smi` 确认） |
-| 总结论 | **正确性与 4.2 完全一致；推理/生成性能一致；训练收益收窄（xtorch_ops/plugin 变化，非 FlagGems）；4 处适配问题，3 处已修** |
+| 环境登记 | [`p800-kunlunxin-gems5`](../configs/devices/p800-kunlunxin-gems5.yaml) profile + [环境锁](../configs/env/p800-kunlunxin-gems5.lock.yaml)（4.2 基线锁 `p800-kunlunxin` 保留） |
+| 总结论 | **已完成的 kernel/A1/mini-consumer 证据与 4.2 基线一致；推理/生成性能一致；训练收益收窄（xtorch_ops/plugin 变化，非 FlagGems）；#20/#21 已修、#22 样例侧规避（根因未修）、#23 仅记录（A2 BLOCKED）、framework 矩阵未复测（§5.5）** |
 
 ## 1. 环境对照
 
-`scripts/check_env.py --device p800-kunlunxin` 实测：
+本复测栈已正式登记为 `p800-kunlunxin-gems5`（profile + 环境锁）：
+`python3 scripts/check_env.py --device p800-kunlunxin-gems5` 当前 9/9 全绿。
+下表为与 4.2 共享镜像基线锁（`p800-kunlunxin`）的对照：
 
 | 包 | 4.2 锁定 | 当前 5.0 | 判定 |
 |---|---|---|---|
@@ -40,7 +44,7 @@ FlagGems 4.2→5.0 对这三个算子的数值路径几乎无直接影响，主�
 **vllm-plugin-FL 0.2.0 分发策略**与 **xtorch_ops 版本**——复测证实这两处，
 见 §4。
 
-## 2. 正确性：与 4.2 完全一致
+## 2. 正确性：已完成范围与 4.2 一致
 
 ### 2.1 三层测试（`example.py` 一键）
 
@@ -144,8 +148,10 @@ vllm-plugin-FL 0.2.0+ 的 `dispatch/config/kunlunxin.yaml` 含
 vendor 的旧写法失效，选中 `default.flagos`。修复：
 `VLLM_FL_PER_OP=silu_and_mul=vendor:<name>|reference` +
 `reset_global_policy()`，已落地 `tests/op_level/test_b.py`、
-`examples/b-op`、`examples/b-fullstack`（stage2）。详见
-[known-issues #20](known-issues.md)。
+`examples/b-op`、`examples/b-fullstack`（stage2）——三处均在导入
+`vllm_fl` 前清掉 `VLLM_FL_OP_CONFIG`（JSON 文件路径，优先级更高且在
+import 期缓存）、断言最终 impl_id，并在结束时恢复环境变量（`--all`
+不污染）。详见 [known-issues #20](known-issues.md)。
 
 ### 5.2 embedding bench 容错缺口（已修）
 
@@ -159,7 +165,8 @@ vendor 的旧写法失效，选中 `default.flagos`。修复：
 
 5.0 的 `_collect_jit_deps` 把模块级 `from __future__ import annotations`
 拷进生成文件中部 → `SyntaxError`。`examples/a1-op`、`examples/a2-op`
-已移除模块级 future import；根治在 FlagGems 侧。详见
+已移除模块级 future import——本仓库侧已规避，**FlagGems codegen 根因
+未修**（根治需在 FlagGems 侧过滤 `__future__` 条目）。详见
 [known-issues #22](known-issues.md)。
 
 ### 5.4 A2 插件与内置 backend impl_id 冲突（仅记录）
@@ -185,8 +192,8 @@ llama-like 模型生成，**不能替代**。可用 `FLAGOS_MODEL_PATH` 换模�
 ## 6. 复测命令清单
 
 ```bash
-# 环境核对
-python3 scripts/check_env.py --device p800-kunlunxin
+# 环境核对（5.0 栈；4.2 基线对照用 --device p800-kunlunxin）
+python3 scripts/check_env.py --device p800-kunlunxin-gems5
 
 # 先 xpu-smi 确认空闲卡（本复测用 5,6 号卡）
 export CUDA_VISIBLE_DEVICES=5,6
@@ -227,17 +234,20 @@ profile 默认 `torch_device: cuda:1`；单卡可见时用 `*_TEST_DEVICE=cuda:0
 
 | 维度 | 4.2 → 5.0 |
 |---|---|
-| 算子数值 / 黄金 / A1 拦截 | **完全一致** |
-| 应用层贪心序列 / 梯度 | **逐位一致** |
+| 算子数值 / 黄金 / A1 拦截（§2 已完成范围） | **一致** |
+| 应用层贪心序列 / 梯度（§2 已完成范围） | **逐位一致** |
 | 推理 / 生成 E2E | **一致** |
 | 训练 E2E / fused backward | 收益收窄（xtorch_ops/plugin 变化，非 FlagGems） |
 | FlagGems API（only_enable / gelu） | **兼容** |
-| 仓库样例 / 测试 / 脚本 | 3 处已修（#20/#21/#22）+ 1 处仅记录（#23） |
+| A2 dispatch（插件路线） | **BLOCKED**（#23，本轮仅记录） |
+| 仓库样例 / 测试 / 脚本 | #20/#21 已修；#22 本仓库已规避（FlagGems 根因未修）；#23 仅记录 |
 | 框架层矩阵 | 未复测（冒烟模型缺口，§5.5） |
 
-**FlagOS-OP 昆仑芯算子成果在 FlagGems 5.0 栈上正确性稳定一致，可继续
-作为 P800 算子开发基线使用。** 性能基线建议在锁定 xtorch_ops 与空闲卡
-条件下重标；框架层矩阵待补冒烟模型后回填。
+**结论仅适用于 §2–§4 已完成的验证范围**：kernel、A1 与 mini-consumer
+证据在 FlagGems 5.0 栈上与 4.2 基线一致，可继续作为这些范围内 P800
+算子开发的参考；A2 插件路线仍为 BLOCKED（#23），framework 矩阵因冒烟
+模型缺失尚未验证（§5.5）——两项回填前不扩大基线声明。性能基线建议在
+锁定 xtorch_ops 与空闲卡条件下重标。
 
 ---
 

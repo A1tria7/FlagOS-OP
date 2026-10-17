@@ -139,6 +139,43 @@ python3 scripts/build_env_index.py --check
 
 备注：torch 为 CPU 轮子 + torch_mlu 插件加速；MLU590-M9 / MLU_VISIBLE_DEVICES=7。 本环境未安装 vLLM（profile quirks.no_vllm_runtime=true 时跳过框架层入口）。
 
+<a id="p800-kunlunxin-gems5"></a>
+### Kunlunxin P800 FlagGems 5.0 复测容器实测版本
+
+| 项 | 声明 |
+|---|---|
+| profile | [`p800-kunlunxin-gems5`](../configs/devices/p800-kunlunxin-gems5.yaml) |
+| 平台家族 | `kunlunxin` |
+| 硬件 | P800 OAM ×8 · 98304 MiB/卡 · 驱动: 515.58 · 固件: ALL 1.0.2.43.1.86 · 运行时: XPU-RT 10.2 |
+| 系统 / 内核 | Linux / 6.8.0-87-generic |
+| Python | `3.10.18` |
+| 声明采集时间 | 软件栈 2026-10-16 · 硬件快照 2026-10-16 |
+| 环境锁 | [`p800-kunlunxin-gems5.lock.yaml`](../configs/env/p800-kunlunxin-gems5.lock.yaml) |
+| 基座镜像 | 未登记 |
+
+适用范围：
+
+- ops/sdpa / sdpa_math / embedding 在 FlagGems 5.0 栈的兼容性复测
+- vllm-plugin-FL 0.2.0 dispatch 行为（known-issues
+- 框架级冒烟（冒烟模型缺失，framework 矩阵未复测，见复测页 §5.5）
+
+| 软件包 / 组件 | 锁定版本 |
+|---|---|
+| `torch` | `2.9.0+cu129` |
+| `torch_xmlir` | `1.0.0.1` |
+| `xtorch_ops` | `0.1.2935+50a5d6a4` |
+| `triton` | `3.0.0+f69a5406` |
+| `flag_gems` | `5.0.0` |
+| `vllm` | `0.20.2+empty` |
+| `vllm_fl` | `0.2.0+g38e7dbc` |
+| `transformers` | `4.57.6` |
+
+证据入口：
+
+- [docs/flaggems5-p800-retest.md](../docs/flaggems5-p800-retest.md)：FlagGems 5.0 P800 复测总入口（黄金、A1、mini-consumer、dispatch 与性能证据）
+
+备注：dev 容器 flagos-p800-gems5-vllm0202-dev（非共享镜像正式发布通道）； flag_gems / vllm-plugin-FL 为 pip 安装，与 4.2 共享镜像的本地路径安装 （/env/FlagGems、/env/xvllm-plugin-FL）不同。框架冒烟模型 /workspace/random-llm-models/llama-3.1-8b-like 在该容器缺失， `--require-model` 会失败，framework 矩阵未复测 （见 docs/flaggems5-p800-retest.md）。硬件快照取自主机 xpu-smi； torch_xmlir 捆绑的 xpu-smi 报告另一组数值（Driver 5.0.21.47 / XPU-RT 5.13.0），以主机工具为准。 `torch_xmlir` 对应发行包名 `xmlir`；`xtorch_ops` 对应发行包名 `XTorch-Ops`；`vllm_fl` 对应发行包名 `vllm-plugin-fl`； `flag_gems` 对应发行包名 `flag-gems`。
+
 <a id="p800-kunlunxin"></a>
 ### Kunlunxin P800 共享镜像实测版本
 

@@ -70,8 +70,12 @@ python3 run.py --all --device p800-kunlunxin
 
 ## 参考实例
 
-- `p800-kunlunxin`: 9/9 矩阵 + 跨层一致性全绿（本库首个完整验证 case，
-  其设备特有问题见 known-issues.md）
+- `p800-kunlunxin`: 4.2.1rc0 基线 9/9 矩阵 + 跨层一致性全绿（本库首个
+  完整验证 case，其设备特有问题见 known-issues.md）
+- `p800-kunlunxin-gems5`: FlagGems 5.0 复测栈——已完成的 kernel / A1 /
+  mini-consumer 证据与 4.2 基线一致；A2 插件路线 BLOCKED
+  （known-issues #23），framework 矩阵因冒烟模型缺失未复测
+  （见 [5.0 复测页](flaggems5-p800-retest.md)）
 - `mlu590`: SDPA 算子三层 + 黄金 397/397 全绿（A1 `AutogradPrivateUse1`；
   fused/TMO 委托修订后 1.00-1.33x 原生，问题见 known-issues.md #18）
 - `nvidia`: profile 就绪；曾借 CUDA 兼容层在加速卡环境验证过

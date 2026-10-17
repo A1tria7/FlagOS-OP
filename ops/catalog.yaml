@@ -26,8 +26,8 @@ platform_families:
   kunlunxin:
     display_name: 昆仑芯
     status: partial
-    current_profiles: [p800-kunlunxin]
-    roadmap_note: 覆盖当前 P800 XMLIR 栈。
+    current_profiles: [p800-kunlunxin, p800-kunlunxin-gems5]
+    roadmap_note: 覆盖当前 P800 XMLIR 栈；含 FlagGems 5.0 复测 profile。
   thead:
     display_name: 平头哥
     status: planned

@@ -249,8 +249,10 @@ per-op 钉选顺序；`OpManager._resolve_impl` 用
 `policy.per_op_order_dict[op] or 默认顺序`——**平台 per_op_order 优先，
 `with_preference("vendor")` 上下文被整体绕过**。0.1.0 及更早无此平台
 配置，同写法在旧栈有效、新栈会选中 `default.flagos`。
-钉选修复（env 优先级 `VLLM_FL_OP_CONFIG` > `VLLM_FL_PER_OP` >
-平台 yaml；env 格式 `op=a|b;op2=x|y`；policy 单例缓存需重置）:
+钉选修复（env 优先级 `VLLM_FL_OP_CONFIG`（JSON 文件路径，
+`{"op": "a|b"}`）> `VLLM_FL_PER_OP`（内联 `op=a|b;op2=x|y`）>
+平台 yaml；`OP_CONFIG` 在 `vllm_fl.utils` import 期被读入模块缓存，
+清 env 后需刷新该缓存；policy 单例缓存需重置）:
 
 ```python
 os.environ["VLLM_FL_PER_OP"] = "silu_and_mul=vendor:<name>|reference"
@@ -259,8 +261,11 @@ reset_global_policy()
 ```
 
 本库已落地: `tests/op_level/test_b.py`、`examples/b-op`、
-`examples/b-fullstack`（stage2）。注意 `--all` 同进程串跑时该环境变量
-会保留到后续测试（框架层 harness 会 pop）。实测见
+`examples/b-fullstack`（stage2）——三处均先保存并清掉
+`VLLM_FL_OP_CONFIG`（优先级高于 `VLLM_FL_PER_OP`，会覆盖钉选），
+`reset_global_policy()` 后断言最终选中 impl_id，运行结束恢复原环境
+变量，`--all` 同进程串跑不残留（框架层 harness 与 b-fullstack stage3
+的子进程 env 同步 pop）。实测见
 [FlagGems 5.0 复测页](flaggems5-p800-retest.md)。
 
 ### 21. embedding 反向原生对照 `scale_grad_by_freq=True` 抛 ValueError
