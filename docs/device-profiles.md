@@ -17,6 +17,7 @@
 |---|---|
 | `vendor` | 与 flag_gems DeviceDetector().vendor_name 匹配（自动探测用） |
 | `auto_detect.module` | 可 import 即识别该设备 |
+| `auto_detect.enabled` | 默认 true；false 时不进入自动探测候选（仅 `--device` / `load_profile()` 显式选择） |
 | `device.torch_device` | 算子层测试设备串（cuda:1 / xpu:0 / npu:0 / cpu） |
 | `device.visible_devices` | 框架级测试暴露的卡号 |
 | `device.dispatch_key` | A1 aten 注册 key（CUDA / PrivateUse1 / CPU ...） |
@@ -68,10 +69,19 @@ python3 run.py --all --device p800-kunlunxin
 2. flag_gems `DeviceDetector().vendor_name` 匹配 `vendor` 字段 → 选中
 3. 失败则报错并列出可用 profile（提示 `--device` 显式指定）
 
+`auto_detect.enabled: false` 的 profile 不进入以上两条路径的候选，仅可
+显式 `--device` / `load_profile()` 选择。自动探测只选择**默认硬件配置**，
+**不校验软件栈版本**——同硬件多软件栈（如 P800 4.2 / 5.0）必须显式指定
+profile，软件版本用 `scripts/check_env.py` 核对。
+
 ## 参考实例
 
-- `p800-kunlunxin`: 9/9 矩阵 + 跨层一致性全绿（本库首个完整验证 case，
-  其设备特有问题见 known-issues.md）
+- `p800-kunlunxin`: 4.2.1rc0 基线 9/9 矩阵 + 跨层一致性全绿（本库首个
+  完整验证 case，其设备特有问题见 known-issues.md）
+- `p800-kunlunxin-gems5`: FlagGems 5.0 复测栈——已完成的 kernel / A1 /
+  mini-consumer 证据与 4.2 基线一致；A2 插件路线 BLOCKED
+  （known-issues #23），framework 矩阵因冒烟模型缺失未复测
+  （见 [5.0 复测页](flaggems5-p800-retest.md)）
 - `mlu590`: SDPA 算子三层 + 黄金 397/397 全绿（A1 `AutogradPrivateUse1`；
   fused/TMO 委托修订后 1.00-1.33x 原生，问题见 known-issues.md #18）
 - `nvidia`: profile 就绪；曾借 CUDA 兼容层在加速卡环境验证过
