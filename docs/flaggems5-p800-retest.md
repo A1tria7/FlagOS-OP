@@ -11,7 +11,7 @@
 |---|---|
 | 日期 | 2026-10-16 |
 | 容器 | `flagos-p800-gems5-vllm0202-dev` |
-| 被测仓库 | FLAG-OP/FlagOS-OP；`baseline_commit: 4d42567`（基线对照点），`tested_commit: 待回填`（最终推送前更新为实际复测 commit） |
+| 被测仓库 | FLAG-OP/FlagOS-OP；`baseline_commit: 4d42567`（基线对照点），`tested_commit: cb84eef`（复测在该提交树上完成；其后仅本行回填的 docs-only 提交） |
 | 复测分支 | `docs/flaggems5-p800-retest` |
 | 对照基线 | 仓库内 4.2.1rc0 环境锁的报告 / 黄金 / `perf/baselines` |
 | 硬件 | Kunlunxin P800 OAM ×8（测试用空闲卡，`xpu-smi` 确认） |
