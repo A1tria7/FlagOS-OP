@@ -156,7 +156,7 @@ python3 scripts/build_env_index.py --check
 适用范围：
 
 - ops/sdpa / sdpa_math / embedding 在 FlagGems 5.0 栈的兼容性复测
-- vllm-plugin-FL 0.2.0 dispatch 行为（known-issues
+- vllm-plugin-FL 0.2.0 dispatch 行为（known-issues #20 / #23）
 - 框架级冒烟（冒烟模型缺失，framework 矩阵未复测，见复测页 §5.5）
 
 | 软件包 / 组件 | 锁定版本 |

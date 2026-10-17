@@ -17,6 +17,7 @@
 |---|---|
 | `vendor` | 与 flag_gems DeviceDetector().vendor_name 匹配（自动探测用） |
 | `auto_detect.module` | 可 import 即识别该设备 |
+| `auto_detect.enabled` | 默认 true；false 时不进入自动探测候选（仅 `--device` / `load_profile()` 显式选择） |
 | `device.torch_device` | 算子层测试设备串（cuda:1 / xpu:0 / npu:0 / cpu） |
 | `device.visible_devices` | 框架级测试暴露的卡号 |
 | `device.dispatch_key` | A1 aten 注册 key（CUDA / PrivateUse1 / CPU ...） |
@@ -67,6 +68,11 @@ python3 run.py --all --device p800-kunlunxin
 1. 各 profile 的 `auto_detect.module` 可 import → 选中
 2. flag_gems `DeviceDetector().vendor_name` 匹配 `vendor` 字段 → 选中
 3. 失败则报错并列出可用 profile（提示 `--device` 显式指定）
+
+`auto_detect.enabled: false` 的 profile 不进入以上两条路径的候选，仅可
+显式 `--device` / `load_profile()` 选择。自动探测只选择**默认硬件配置**，
+**不校验软件栈版本**——同硬件多软件栈（如 P800 4.2 / 5.0）必须显式指定
+profile，软件版本用 `scripts/check_env.py` 核对。
 
 ## 参考实例
 

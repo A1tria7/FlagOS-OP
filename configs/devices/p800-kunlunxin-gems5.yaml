@@ -5,7 +5,8 @@ name: p800-kunlunxin-gems5
 vendor: kunlunxin
 
 auto_detect:
-  module: torch_xmlir        # 可 import 即认定为该设备
+  module: torch_xmlir        # 硬件探测模块（仅记录；enabled: false 时不参与探测）
+  enabled: false             # 同硬件可装 4.2/5.0 多软件栈，探测不区分版本——仅显式 --device 选择
 
 device:
   torch_device: "cuda:1"     # 算子层测试设备 (XPU 经 XMLIR 伪装为 CUDA)
@@ -44,14 +45,14 @@ vendor_kernels:
     adapter: gelu_tanh_and_mul
     n_inputs: 2
     expected_ok: false
-    known_issue: XPU2(=cuda:1) 上非确定且输出 inf; XPU1(=cuda:0) 上 err≈0.125 正常（按设备分化 bug，known-issues #5；偶发，哨兵可能单次未复现）
+    known_issue: "XPU2(=cuda:1) 上非确定且输出 inf; XPU1(=cuda:0) 上 err≈0.125 正常（按设备分化 bug，known-issues #5；偶发，哨兵可能单次未复现）"
   - name: xtorch_ops.silu
     op: silu
     out_mode: out_param
     adapter: out_param
     n_inputs: 1
     expected_ok: false
-    known_issue: out 参数不写输出（与 swiglu 同类，known-issues #2）
+    known_issue: "out 参数不写输出（与 swiglu 同类，known-issues #2）"
   # 已知坏例: 哨兵检查应能抓出（验证检测能力）
   - name: xtorch_ops.swiglu
     op: gelu_and_mul
@@ -59,7 +60,7 @@ vendor_kernels:
     adapter: out_param
     n_inputs: 2
     expected_ok: false
-    known_issue: 独立 eager 调用不写输出（known-issues #2）
+    known_issue: "独立 eager 调用不写输出（known-issues #2）"
   # 自研 C++ kernel JIT 编译产物（csrc 闭环）
   - name: my_vendor_ops.gelu_and_mul
     op: gelu_and_mul

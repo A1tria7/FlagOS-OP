@@ -134,7 +134,7 @@ XPU1 另见 [known-issues #5](known-issues.md) 的 Xid 补注，复测避开
 | `tests/op_level/test_b` | **PASS** | #20 修复后选中 `vendor:audit` |
 | `tests/op_level/test_a2` | **FAIL** | #23：内置 `gelu_and_mul` 冲突，TypeError |
 | `run.py --consistency` | **FAIL** | #23（跨层一致性收尾格） |
-| `run.py --level framework` 各格 | 未复测 | 冒烟模型缺口 → HFValidationError（§5.5） |
+| `run.py --route {a1,a2,b} --level framework` 各格 | 未复测 | 冒烟模型缺口 → HFValidationError（§5.5） |
 | `ops/embedding/script/bench_perf.py` | **PASS**（含 scale 行） | #21 修复后 `scale_grad_by_freq=true` 行记 `native_error` 不再崩溃 |
 | `pytest tests/unit` | 44 passed | — |
 
@@ -199,7 +199,7 @@ python3 scripts/check_env.py --device p800-kunlunxin-gems5
 export CUDA_VISIBLE_DEVICES=5,6
 
 # 算子三层一键（embedding / sdpa / sdpa_math 同构）
-cd ops/sdpa_math && python3 example.py p800-kunlunxin
+cd ops/sdpa_math && python3 example.py p800-kunlunxin-gems5
 
 # 黄金
 python3 script/gen_golden.py
@@ -214,16 +214,27 @@ python3 script/e2e_flagos.py --device cuda:0 --dtype bfloat16
 
 # 单测与矩阵
 cd ../.. && python3 -m pytest tests/unit -q
-python3 run.py --consistency
-python3 run.py --level framework     # 需冒烟模型（§5.5）
+python3 run.py --consistency --device p800-kunlunxin-gems5
+
+# framework 矩阵（待 §5.5 冒烟模型就绪后执行；模型缺失时 vLLM 启动即 HFValidationError）
+for route in a1 a2 b; do
+  python3 run.py --route "$route" --level framework \
+    --device p800-kunlunxin-gems5
+done
 
 # 路线样例
-python3 examples/a1-op/example.py p800-kunlunxin
-python3 examples/a2-op/example.py p800-kunlunxin     # stage2 现 FAIL（#23）
-python3 examples/b-op/example.py p800-kunlunxin
-python3 examples/b-fullstack/example.py p800-kunlunxin
-python3 tests/op_level/test_b.py p800-kunlunxin
+python3 examples/a1-op/example.py p800-kunlunxin-gems5
+python3 examples/a2-op/example.py p800-kunlunxin-gems5   # stage2 现 FAIL（#23）
+python3 examples/b-op/example.py p800-kunlunxin-gems5
+python3 examples/b-fullstack/example.py p800-kunlunxin-gems5
+python3 tests/op_level/test_b.py p800-kunlunxin-gems5
 ```
+
+**执行状态**：framework 矩阵待 §5.5 冒烟模型就绪后按本清单执行（复测当日该项
+在 vLLM 启动阶段因模型缺失止于 `HFValidationError`，未进入测试）；其余命令为
+复测当日实际执行项，当时以同硬件 `p800-kunlunxin` 参数运行（两 profile 硬件
+参数相同，软件栈由已安装包决定，见 §1），本清单统一改用 `p800-kunlunxin-gems5`
+以对齐新增环境锁。
 
 **设备可见性**：容器默认 `CUDA_VISIBLE_DEVICES=1,2`（仅 `cuda:0/1`）；
 profile 默认 `torch_device: cuda:1`；单卡可见时用 `*_TEST_DEVICE=cuda:0`
