@@ -199,7 +199,10 @@ python3 scripts/check_env.py --device p800-kunlunxin-gems5
 export CUDA_VISIBLE_DEVICES=5,6
 
 # 算子三层一键（embedding / sdpa / sdpa_math 同构）
-cd ops/sdpa_math && python3 example.py p800-kunlunxin-gems5
+# standalone 参数是本地硬件别名（ops/*/_profile.py 内置 p800-kunlunxin 等），
+# 不读取中央 configs/devices/*.yaml；别名不代表选择/切换 FlagGems 4.2，
+# 软件栈以上方 check_env 的 5.0 环境锁核对为准
+cd ops/sdpa_math && python3 example.py p800-kunlunxin
 
 # 黄金
 python3 script/gen_golden.py
@@ -230,11 +233,20 @@ python3 examples/b-fullstack/example.py p800-kunlunxin-gems5
 python3 tests/op_level/test_b.py p800-kunlunxin-gems5
 ```
 
-**执行状态**：framework 矩阵待 §5.5 冒烟模型就绪后按本清单执行（复测当日该项
-在 vLLM 启动阶段因模型缺失止于 `HFValidationError`，未进入测试）；其余命令为
-复测当日实际执行项，当时以同硬件 `p800-kunlunxin` 参数运行（两 profile 硬件
-参数相同，软件栈由已安装包决定，见 §1），本清单统一改用 `p800-kunlunxin-gems5`
-以对齐新增环境锁。
+**执行状态与参数口径**，本清单分两类入口：
+
+- **standalone 算子入口**（`ops/*/_profile.py` 本地加载器）：参数是**本地硬件
+  别名**，不读取中央 `configs/devices/*.yaml`，仅接受其内置值（如
+  `p800-kunlunxin`）；别名不代表选择/切换 FlagGems 版本，实际软件栈由已安装
+  包决定，用 `check_env.py --device p800-kunlunxin-gems5` 按 5.0 环境锁核对
+- **中央入口**（`run.py`、路线样例、`test_b.py`）：读取中央 profile，显式传
+  已登记的 `p800-kunlunxin-gems5`
+
+framework 矩阵待 §5.5 冒烟模型就绪后按本清单执行（复测当日该项在 vLLM 启动
+阶段因模型缺失止于 `HFValidationError`，未进入测试，非参数错误）。其余命令为
+复测当日实际执行项，当时两类入口均以 `p800-kunlunxin` 参数运行（同硬件同包
+版本；中央入口本清单已改传 `p800-kunlunxin-gems5` 对齐环境锁，standalone 保持
+其本地别名）。
 
 **设备可见性**：容器默认 `CUDA_VISIBLE_DEVICES=1,2`（仅 `cuda:0/1`）；
 profile 默认 `torch_device: cuda:1`；单卡可见时用 `*_TEST_DEVICE=cuda:0`
