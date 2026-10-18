@@ -38,13 +38,17 @@ FlagOS-OP 是一套自定义算子的开发模板库。写一个算子并不难�
 
 ## 快速开始
 
+昆仑芯 P800 用户先按[环境配置](docs/installation.md#kunlunxin)区分 4.2
+基线与 5.0 复测栈。5.0 的中央测试入口须显式传 `p800-kunlunxin-gems5`；
+独立算子使用本地硬件别名，完整矩阵的已知限制见[复测页](docs/flaggems5-p800-retest.md)。
+
 ```bash
 DEVICE=<profile名> ./scripts/run_all.sh     # 全矩阵 + 一致性
 python3 run.py --route a1 --level kernel    # 单格
 python3 run.py --list                       # 查看可用设备
 python3 examples/b-fullstack/example.py     # 全链路样例（约 3 分钟）
 cp -r templates/operator ops/my_op/         # ← 新算子从这里开始
-python3 scripts/perf_compare.py --device p800-kunlunxin   # 性能回归门禁
+python3 scripts/perf_compare.py --device p800-kunlunxin   # P800 4.2 已有性能基线
 python3 scripts/intake_validate.py --validate-only        # AI 生成算子契约
 ```
 
