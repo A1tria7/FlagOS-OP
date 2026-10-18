@@ -19,6 +19,12 @@
 profile 是运行配置声明，不等于该平台上的全部算子都已有交付证据；支持范围以
 [算子 / 平台矩阵](operator-catalog.md) 和对应算子报告为准。
 
+昆仑芯 P800 有两个环境：4.2 基线用 `p800-kunlunxin`，5.0 复测栈用
+`p800-kunlunxin-gems5`。5.0 必须显式选择，自动探测不区分软件版本；独立
+算子仍使用本地硬件别名。先按[昆仑芯环境配置](installation.md#kunlunxin)
+核验版本、卡号与模型，再运行对应范围；5.0 的 A2/consistency 仍有已知
+冲突，framework 矩阵尚未完成复测。
+
 ## 5 分钟流程
 
 ```bash
@@ -40,7 +46,8 @@ DEVICE=<profile> ./scripts/run_all.sh
 - **C0 契约路径**：用于确认 intake manifest、参考实现和仓库目录契约；结果不代表设备注册或性能。
 - **目标设备路径**：用于确认指定 profile 的 kernel、注册和分发；只报告该 profile 已运行的层级。
 - **真实引擎路径**：使用 `examples/a1-framework/example.py <profile>` 或
-  `run.py --level framework`，报告必须注明真实 vLLM 还是 mini consumer，以及引擎版本。
+  `run.py --route a1 --level framework --device <profile>`，报告必须注明真实
+  vLLM 还是 mini consumer，以及引擎版本。
 
 第 2 步成功时你会看到类似输出：
 

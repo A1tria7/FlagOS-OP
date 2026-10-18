@@ -80,19 +80,102 @@ print("cuda_available:", torch.cuda.is_available())
 PY
 ```
 
-有环境锁文件的平台继续核对：
+已登记的 Ascend、Cambricon、Kunlunxin 实测环境见
+[软硬件环境版本汇总](environments.md)，按对应环境锁运行
+`scripts/check_env.py --device <profile>`。昆仑芯的具体入口见
+[下一节](#kunlunxin)。
+
+<a id="kunlunxin"></a>
+### 2.2 昆仑芯 P800：选择环境并验证
+
+先确认当前容器属于哪套已登记环境；profile 用于选择配置和核对版本，
+不会安装或切换软件栈：
+
+| 中央 profile | 环境用途 | FlagGems / vllm-plugin-FL 安装方式 |
+|---|---|---|
+| [`p800-kunlunxin`](../configs/devices/p800-kunlunxin.yaml) | FlagGems **4.2.1rc0** 共享镜像基线 | 本地路径 `/env/FlagGems`、`/env/xvllm-plugin-FL` |
+| [`p800-kunlunxin-gems5`](../configs/devices/p800-kunlunxin-gems5.yaml) | FlagGems **5.0.0** dev 复测容器 `flagos-p800-gems5-vllm0202-dev` | pip 安装；非共享镜像正式发布通道 |
+
+完整包版本见[环境汇总](environments.md)及
+[4.2 环境锁](../configs/env/p800-kunlunxin.lock.yaml)、
+[5.0 环境锁](../configs/env/p800-kunlunxin-gems5.lock.yaml)。不要用通用
+`pip install --upgrade` 覆盖厂商栈。当前[基座镜像关联](base-images.md#kunlunxin-p800-operator-runtime-v2)
+只覆盖 4.2 的版本对齐关系，不表示同一镜像实例已验证；5.0 尚未登记可获取的
+镜像 tag、digest 或构建配方。版本锁是已有环境的核对记录，不能据此宣称
+可从零重建 5.0 容器。
+
+在对应容器、仓库根目录执行环境核对（二选一）：
 
 ```bash
+# 4.2 共享镜像基线
 python3 scripts/check_env.py --device p800-kunlunxin
+# 5.0 dev 复测栈
+python3 scripts/check_env.py --device p800-kunlunxin-gems5
 ```
 
-已登记的 Ascend、Cambricon、Kunlunxin 实测环境见
-[软硬件环境版本汇总](environments.md)。
+不带 `--require-model` 时，即使模型缺失也可通过；它只核对 Python 和包版本，
+不证明硬件、模型或完整测试矩阵可用。5.0 的中央入口必须显式选择 profile：
+自动探测只探测硬件，不区分 4.2/5.0，且 `p800-kunlunxin-gems5` 已禁用
+自动选择。
 
-P800 锁定文件明确记录：FlagGems 和 `vllm-plugin-fl` 来自共享镜像本地
-路径，不建议随意用 pip 覆盖安装。
+```bash
+# 中央矩阵入口：显式 --device
+python3 run.py --route a1 --level op --device p800-kunlunxin-gems5
+# 路线样例：中央 profile 是位置参数
+python3 examples/a1-op/example.py p800-kunlunxin-gems5
+python3 examples/b-op/example.py p800-kunlunxin-gems5
 
-### 2.2 开发者源码方式
+# standalone 算子入口：仍传算子内置的本地硬件别名
+python3 ops/sdpa_math/example.py p800-kunlunxin
+python3 ops/sdpa/example.py p800-kunlunxin
+python3 ops/embedding/example.py p800-kunlunxin
+```
+
+standalone 的 `p800-kunlunxin` 不读取中央 profile，也不表示切回 4.2；
+实际软件栈以当前容器和环境核对为准。代码中的 `platform="p800-kunlunxin"`
+或 `impl="p800"` 也是算子本地实现选择，不能统一替换成
+`p800-kunlunxin-gems5`（见[算子本地 profile](#local-profiles)）。
+
+运行中央 framework 层前，先检查模型目录；如需覆盖 profile 默认路径：
+
+```bash
+export FLAGOS_MODEL_PATH="/path/to/compatible/model"
+python3 scripts/check_env.py --device p800-kunlunxin-gems5 --require-model
+```
+
+`--require-model` 只额外检查目录存在。还需确认模型架构、引擎参数与黄金数据
+一致；换模型须在同一模型上重新生成黄金后再比对。5.0 复测容器缺少 profile
+声明的 llama-like 模型，已有 Qwen3 tiny 模型的架构和长度配置不匹配，不能
+直接替代，因此中央 framework 矩阵未复测。A2 与 `run.py --consistency`
+另受[已知问题 #23](known-issues.md) 阻塞，不能把安装核对通过视为全矩阵通过。
+已完成范围和历史结果见 [FlagGems 5.0 P800 复测](flaggems5-p800-retest.md)。
+运行前的卡号选择、可见设备覆盖和模型配置边界见
+[昆仑芯设备配置](device-profiles.md#kunlunxin-devices)。
+
+5.0 还未入库 `golden/p800-kunlunxin-gems5_golden.json`。即使补回原来的
+llama-like 模型，A1/B framework 的历史黄金检查也会因该文件缺失而跳过
+（日志为 `no golden file, skipped`）；同次 baseline/plugin 比较成功不能
+代替历史黄金验证。环境、卡号和模型就绪后，按当前配置建立并审阅该 profile
+的框架黄金，再运行需要黄金回归证据的测试：
+
+```bash
+python3 scripts/build_golden.py --device p800-kunlunxin-gems5 --snapshots 3
+```
+
+这份框架黄金与三个独立算子的 `goldendata/` 不同；后者已有的精度通过记录
+不受框架黄金缺失影响。不要直接把 4.2 的黄金改名成 gems5。
+
+复测时可保存环境快照，另附实际命令与提交 SHA：
+
+```bash
+python3 scripts/env_snapshot.py --device p800-kunlunxin-gems5 --out env-p800-gems5.md
+```
+
+快照不会自动填入镜像 digest、模型身份或所有设备覆盖变量，报告需补充这些
+信息。主机与容器 `xpu-smi` 版本不一致时，保留工具来源；硬件锁以主机工具
+记录为准，包版本仍以 `check_env.py` 核对为准。
+
+### 2.3 开发者源码方式
 
 如果需要修改 FlagGems，先按 FlagGems 上游或团队 fork 的说明安装依赖，
 再让 Python 同时看到两个源码树：
@@ -476,7 +559,12 @@ parent : 载入两边输出，比较精度
 3. 不确定时用子进程分别跑 baseline 和 A1；
 4. 不要在同一进程注册 A1 后再采集“未注册原生”结果。
 
+<a id="local-profiles"></a>
 ### 8.3 平台 profile
+
+下表列的是各算子 standalone 入口的**本地硬件别名**，不是中央
+`configs/devices/*.yaml` 的软件栈选择；P800 4.2/5.0 的选择规则见
+[昆仑芯安装入口](#kunlunxin)。
 
 | 算子 | P800 | Cambricon | CPU |
 |---|---|---|---|

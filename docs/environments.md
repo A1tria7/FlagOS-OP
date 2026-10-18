@@ -174,10 +174,10 @@ python3 scripts/build_env_index.py --check
 
 - [docs/flaggems5-p800-retest.md](../docs/flaggems5-p800-retest.md)：FlagGems 5.0 P800 复测总入口（黄金、A1、mini-consumer、dispatch 与性能证据）
 
-备注：dev 容器 flagos-p800-gems5-vllm0202-dev（非共享镜像正式发布通道）； flag_gems / vllm-plugin-FL 为 pip 安装，与 4.2 共享镜像的本地路径安装 （/env/FlagGems、/env/xvllm-plugin-FL）不同。框架冒烟模型 /workspace/random-llm-models/llama-3.1-8b-like 在该容器缺失， `--require-model` 会失败，framework 矩阵未复测 （见 docs/flaggems5-p800-retest.md）。硬件快照取自主机 xpu-smi； torch_xmlir 捆绑的 xpu-smi 报告另一组数值（Driver 5.0.21.47 / XPU-RT 5.13.0），以主机工具为准。 `torch_xmlir` 对应发行包名 `xmlir`；`xtorch_ops` 对应发行包名 `XTorch-Ops`；`vllm_fl` 对应发行包名 `vllm-plugin-fl`； `flag_gems` 对应发行包名 `flag-gems`。
+备注：dev 容器 flagos-p800-gems5-vllm0202-dev（非共享镜像正式发布通道）； 尚未登记对应镜像 tag/digest 或构建配方，本锁用于核对已有容器的软件版本， 不作为完整安装清单。中央入口须显式选择 `p800-kunlunxin-gems5`， 独立算子使用各自的本地硬件别名，见 [昆仑芯环境配置](installation.md#kunlunxin)。 flag_gems / vllm-plugin-FL 为 pip 安装，与 4.2 共享镜像的本地路径安装 （/env/FlagGems、/env/xvllm-plugin-FL）不同。框架冒烟模型 /workspace/random-llm-models/llama-3.1-8b-like 在该容器缺失， `--require-model` 会失败，framework 矩阵未复测 （见 docs/flaggems5-p800-retest.md）。硬件快照取自主机 xpu-smi； torch_xmlir 捆绑的 xpu-smi 报告另一组数值（Driver 5.0.21.47 / XPU-RT 5.13.0），以主机工具为准。 `torch_xmlir` 对应发行包名 `xmlir`；`xtorch_ops` 对应发行包名 `XTorch-Ops`；`vllm_fl` 对应发行包名 `vllm-plugin-fl`； `flag_gems` 对应发行包名 `flag-gems`。
 
 <a id="p800-kunlunxin"></a>
-### Kunlunxin P800 共享镜像实测版本
+### Kunlunxin P800 FlagGems 4.2 基线共享镜像实测版本
 
 | 项 | 声明 |
 |---|---|
@@ -214,7 +214,7 @@ python3 scripts/build_env_index.py --check
 - [ops/sdpa_math/REPORT.md](../ops/sdpa_math/REPORT.md)：sdpa_math 三层验证与 P800 性能证据
 - [ops/embedding/REPORT.md](../ops/embedding/REPORT.md)：embedding 三层验证与 P800 性能证据
 
-备注：flag_gems 与 vllm-plugin-fl 在共享镜像中为本地路径安装 （/env/FlagGems、/env/xvllm-plugin-FL），核对版本即可， 不建议 pip 覆盖安装。硬件快照来自 2026-10-16 的 `xpu-smi -q` 与 `scripts/env_snapshot.py --device p800-kunlunxin`。 `torch_xmlir` 对应发行包名 `xmlir`；`xtorch_ops` 对应发行包名 `XTorch-Ops`。
+备注：本锁对应 FlagGems 4.2 基线；5.0 复测栈使用独立的 `p800-kunlunxin-gems5` profile 与环境锁。选择与运行步骤见 [昆仑芯环境配置](installation.md#kunlunxin)。 flag_gems 与 vllm-plugin-fl 在共享镜像中为本地路径安装 （/env/FlagGems、/env/xvllm-plugin-FL），核对版本即可， 不建议 pip 覆盖安装。硬件快照来自 2026-10-16 的 `xpu-smi -q` 与 `scripts/env_snapshot.py --device p800-kunlunxin`。 `torch_xmlir` 对应发行包名 `xmlir`；`xtorch_ops` 对应发行包名 `XTorch-Ops`。
 
 <a id="not-validated"></a>
 ## 未登记为实测环境

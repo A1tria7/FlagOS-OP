@@ -7,6 +7,9 @@
 [已知问题清单](known-issues.md)，性能口径见
 [性能回归追踪](performance-regression.md)。
 
+首次配置环境与选择命令入口见[昆仑芯环境配置](installation.md#kunlunxin)；
+本页保留复测时的结果，后续文档修正不代表新增真机验证。
+
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-10-16 |
@@ -75,7 +78,9 @@ FlagGems 4.2→5.0 对这三个算子的数值路径几乎无直接影响，主�
 - FlagGems gelu（bf16）vs native：L∞=0
 - 5.0 打印 `Overriding a previously registered kernel ... aten::gelu`
   警告——属正常覆盖，非错误
-- `pytest tests/unit -q` → **44 passed**
+- `pytest tests/unit -q`：`cb84eef` 数值复测时 **44 passed**；
+  `9133a93` 增加两条自动探测单测后 **46 passed**，最终文档提交
+  `9ed1aa6` 的 CI 也通过 46 项（见 [PR32 核验记录](https://github.com/FLAG-OP/FlagOS-OP/pull/32#issuecomment-6230636011)）
 
 ### 2.4 e2e 数值（vLLM 栈 mini-LLM，与 4.2 同种子逐项相同）
 
@@ -116,7 +121,10 @@ FlagGems 4.2→5.0 对这三个算子的数值路径几乎无直接影响，主�
 `aten._scaled_dot_product_efficient_attention`（torch_xmlir /
 xtorch_ops），与 FlagGems 无关；训练路径偏移随 **xtorch_ops
 0.1.2640→0.1.2935** 出现。建议锁定 xtorch_ops 版本后重跑
-`e2e_flagos.py` 刷新 `perf/baselines/p800-kunlunxin.json` 训练相关 case。
+`e2e_flagos.py` 保存同口径训练报告；中央性能基线须用
+`perf_run.py --device p800-kunlunxin-gems5 --update-baseline` 在成功采集后
+单独建立并审阅，不覆盖 4.2 的 `p800-kunlunxin.json`。`e2e_flagos.py`
+本身不更新中央基线，详见[性能回归追踪](performance-regression.md)。
 
 **卡状态警告**：占用卡（如当时 100% util 的物理 XPU2）上 forward 掉到
 0.78–0.85x、fused backward 倒挂——性能结论必须以空闲卡数据为准；物理
@@ -136,7 +144,7 @@ XPU1 另见 [known-issues #5](known-issues.md) 的 Xid 补注，复测避开
 | `run.py --consistency` | **FAIL** | #23（跨层一致性收尾格） |
 | `run.py --route {a1,a2,b} --level framework` 各格 | 未复测 | 冒烟模型缺口 → HFValidationError（§5.5） |
 | `ops/embedding/script/bench_perf.py` | **PASS**（含 scale 行） | #21 修复后 `scale_grad_by_freq=true` 行记 `native_error` 不再崩溃 |
-| `pytest tests/unit` | 44 passed | — |
+| `pytest tests/unit` | 44 → 46 passed | 数值复测时 44；review 新增两条探测单测后 46（§2.3） |
 
 ## 5. 发现与修复
 
@@ -182,12 +190,19 @@ import 期缓存）、断言最终 impl_id，并在结束时恢复环境变量�
 
 设备 profile 声明的 `model_path`
 （`/workspace/random-llm-models/llama-3.1-8b-like`）**在本容器不存在**
-——`run.py --level framework` 各格与 `examples/b-fullstack` stage3 均在
+——`run.py --route <route> --level framework --device p800-kunlunxin-gems5`
+各格与 `examples/b-fullstack` stage3 均在
 vLLM 启动时 `HFValidationError`，本轮无法复测。仓内仅有
 `/models/random-qwen3-tiny`（Qwen3 4L，`max_position_embeddings=512`）：
 架构与 profile `engine_args`（`max_model_len=4096`）不兼容，且黄金按
 llama-like 模型生成，**不能替代**。可用 `FLAGOS_MODEL_PATH` 换模型路径，
-但黄金需在同模型上重新生成后再比对。补回原模型或重建黄金后回填本页。
+但黄金需在同模型上重新生成后再比对。
+
+当前也未入库 `golden/p800-kunlunxin-gems5_golden.json`；A1/B framework
+按 profile 名查找该文件，缺失时历史黄金检查会跳过。因此补回模型后还需
+建立并审阅 5.0 框架黄金，完成相应验证后再回填本页。操作入口见
+[安装指南](installation.md#kunlunxin)，这里的框架黄金与 §2.2 独立算子的
+黄金精度记录不同。
 
 ## 6. 复测命令清单
 
@@ -196,6 +211,7 @@ llama-like 模型生成，**不能替代**。可用 `FLAGOS_MODEL_PATH` 换模�
 python3 scripts/check_env.py --device p800-kunlunxin-gems5
 
 # 先 xpu-smi 确认空闲卡（本复测用 5,6 号卡）
+# 此变量控制当前进程；framework 子进程的卡号另由 profile.visible_devices 决定
 export CUDA_VISIBLE_DEVICES=5,6
 
 # 算子三层一键（embedding / sdpa / sdpa_math 同构）
@@ -220,6 +236,7 @@ cd ../.. && python3 -m pytest tests/unit -q
 python3 run.py --consistency --device p800-kunlunxin-gems5
 
 # framework 矩阵（待 §5.5 冒烟模型就绪后执行；模型缺失时 vLLM 启动即 HFValidationError）
+# 运行前核对所用 profile 的 device.visible_devices；该字段会覆盖上面的 5,6
 for route in a1 a2 b; do
   python3 run.py --route "$route" --level framework \
     --device p800-kunlunxin-gems5
@@ -248,10 +265,14 @@ framework 矩阵待 §5.5 冒烟模型就绪后按本清单执行（复测当日
 版本；中央入口本清单已改传 `p800-kunlunxin-gems5` 对齐环境锁，standalone 保持
 其本地别名）。
 
-**设备可见性**：容器默认 `CUDA_VISIBLE_DEVICES=1,2`（仅 `cuda:0/1`）；
-profile 默认 `torch_device: cuda:1`；单卡可见时用 `*_TEST_DEVICE=cuda:0`
-覆盖，否则报 `invalid device ordinal`。复测原始 JSON 留档于复测容器
-`/work/logs/`（未入库）。
+**设备可见性**：两个 P800 中央 profile 默认 `torch_device: cuda:1`、
+`visible_devices: "1,2"`。framework harness 与 b-fullstack stage3 会将
+子进程 `CUDA_VISIBLE_DEVICES` 写为 profile 的 `visible_devices`，因此上面的
+`export ...=5,6` 不代表框架子进程也使用卡 5,6；运行前须同步检查该字段。
+`SDPA_TEST_DEVICE` / `SDPA_MATH_TEST_DEVICE` / `EMBEDDING_TEST_DEVICE`
+仅覆盖对应独立算子的逻辑设备，不覆盖中央入口，也不替代框架 TP=2 的配置。
+具体设置见[昆仑芯卡号与入口选择](device-profiles.md#kunlunxin-devices)。
+复测原始 JSON 留档于复测容器 `/work/logs/`（未入库）。
 
 ## 7. 结论
 

@@ -67,6 +67,7 @@ revision `74197bf7d4b5dc8cdd3b2b89b15ac3561936dda6`，读取时间 2026-10-16。
 
 - 外部源标记为可用配方重建并实机自检通过。
 - 与 FlagOS-OP p800-kunlunxin 环境锁的 Python/torch/FlagGems 主版本线对齐。
+- 该关联限于 FlagGems 4.2 基线；p800-kunlunxin-gems5 的 5.0 dev 复测容器尚未登记基座镜像，不应由本 tag 推断其构建来源。
 - FlagOS-OP 未登记运行容器的 image id 或 digest，因此不声明“同镜像实例已验证”。
 - 关联环境锁：`p800-kunlunxin`。
 

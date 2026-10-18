@@ -61,6 +61,7 @@ flowchart TB
 |---|---|
 | 下载仓库并与 FlagGems 配合使用 | [安装与 FlagGems 配合使用](installation.md) |
 | 查询实测软硬件版本并核对环境 | [软硬件环境版本汇总](environments.md) |
+| 选择昆仑芯 4.2 / 5.0 环境并配置运行入口 | [昆仑芯环境配置](installation.md#kunlunxin) |
 | 查看各平台基座镜像索引 | [基座镜像索引](base-images.md) |
 | 5 分钟跑通 | [快速开始](getting-started.md) |
 | 从样板开始开发新算子 | [算子样板](../templates/operator/README.md)（copy-paste 起点） |

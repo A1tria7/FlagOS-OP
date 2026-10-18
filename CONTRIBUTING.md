@@ -66,8 +66,13 @@ python3 scripts/build_ops_index.py --check
 
 ```bash
 python3 -m pytest tests/unit -q                                            # 基础设施单测（无 GPU）
-python3 scripts/check_env.py --device p800-kunlunxin --require-model       # 共享镜像环境核对
+python3 scripts/check_env.py --device <profile>                            # 匹配所用软件栈的环境锁
 ```
+
+昆仑芯 4.2 基线使用 `p800-kunlunxin`，5.0 复测栈使用
+`p800-kunlunxin-gems5`（见[环境配置](docs/installation.md#kunlunxin)）。
+真实框架测试前另加 `--require-model` 检查模型目录；5.0 复测容器的默认
+模型缺失，不能把软件版本核对通过当作 framework 验证通过。
 
 ```bash
 # 文档链接与 mermaid 完整性（0 错误才过）
