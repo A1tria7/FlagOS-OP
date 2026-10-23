@@ -5,7 +5,7 @@
 | 算子 / 路线 | `aten::matmul` / A1 `AutogradCUDA` |
 | 目标设备 | Kunlunxin P800，物理 XPU 2 |
 | 环境 | `tyanfeng-flagos-p800-lock`；Torch 2.9.0+cu129；Triton 3.0.0+03c4c9be |
-| 报告状态 | 昆仑芯正式验证通过；FlagGems matmul 对照不可用原因已记录 |
+| 报告状态 | PASS（昆仑芯已测精度范围）；FlagGems matmul 对照不可用原因已记录 |
 
 ## 1. 用例与判卷
 
@@ -51,3 +51,10 @@ CPU 黄金由 `reference.py` 调用 CPU PyTorch 生成，用作设备实现的�
 锁定版 FlagGems `bmm` 在自动调参阶段报错，无法形成有效精度/性能对照。寒武纪、昇腾和壁仞尚未验证。
 
 复现：`script/gen_golden.py`、`script/check_accuracy.py --impl triton --device p800-kunlunxin`、`--impl a1-triton`；执行前设置本轮设备映射。环境和命令见 [开发报告](development.md)。
+
+<!-- tyf-2026-10-23-fix; tyf <tyanfeng@mail.ustc.edu.cn> -->
+
+2026-10-23 在相同 4.2 环境锁、物理 XPU 2 上重建 CPU 黄金并复测：
+直调 Triton、A1 各 144/144，A1 命中 144 次，最坏相对误差均为 `7.75e-3`。
+kernel 的 144 组、哨兵、零 stride 反向及 K=1/2 残留回归 36/36 通过。
+该结果针对注册延迟导入改动后的快照，源码身份见 [PR 自查记录](pr-readiness.md)。

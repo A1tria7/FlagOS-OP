@@ -8,11 +8,15 @@
 | 目标平台 | Kunlunxin P800，正式物理 XPU 2 |
 | 开发者 | 陶焱烽 |
 | 环境 | 个人容器 `tyanfeng-flagos-p800-lock`；Torch 2.9.0+cu129；Triton 3.0.0+03c4c9be |
-| 报告日期 / 状态 | 2026-10-22 / 昆仑芯功能、正确性、A1 和小型 framework 已通过；性能记录已建立，门禁保留 4 FAIL / 4 WARN |
+| 报告日期 / 状态 | 2026-10-23 / PARTIAL：已有昆仑芯功能与 C1 证据；性能门禁保留 4 FAIL / 4 WARN，尚未完成最终验收 |
 
 本阶段按第一周期要求交付功能版本、正确性证据和初始性能记录。应用层以
 小型 framework 消费者为准，真实模型接入和 tiny vLLM 不属于本阶段范围；
 性能优化安排在后续周期。
+
+<!-- tyf-2026-10-23-fix; tyf <tyanfeng@mail.ustc.edu.cn> -->
+
+当前 PR 自查和合并后回归状态见 [交付自查](reports/pr-readiness.md)。
 
 ## 1. 实现矩阵
 
@@ -54,6 +58,18 @@ CPU reference 采用 FP32 内部计算，GEMM 非零结果按相对误差 `5e-2`
 
 应用层不使用真实模型；物理 XPU 1 曾在 matmul 前的最小标量读回阶段超时，
 不列为已验证设备。寒武纪、昇腾和壁仞尚未进行 matmul 验证。
+
+### 应用消费者证据（历史验证：PASS）
+
+| 字段 | 值 |
+|---|---|
+| consumer_type | `MatmulConsumer`：两次 matmul + FlagGems GELU，含一阶反向 |
+| 证据等级 | C1 最小消费者 |
+| 引擎 / 版本 | PyTorch eager 2.9.0+cu129；FlagGems 4.2.1rc0 |
+| profile | `p800-kunlunxin`，物理 XPU 2 |
+| 测试日期 | 2026-10-14；本次新快照回归单列于交付自查 |
+| commit / 源码身份 | 历史结果采集时工作树未提交；对应代码已收录于 `f697348`，实测源码以 [SHA256 记录](reports/performance_xpu2_v1/provenance.json) 为准，不声称当时直接测试了该 commit |
+| 可支持结论 | 此消费者输出、梯度及两次 A1 命中通过；不代表 C2 真实引擎验证 |
 
 ## 4. 关键问题与修复
 

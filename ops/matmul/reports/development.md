@@ -7,7 +7,7 @@
 | 开发级别 | **Triton 级**（自研 dot）；硬件级置空 |
 | 目标设备 | Kunlunxin P800，物理 XPU 2 |
 | 开发者 | 陶焱烽 |
-| 日期 / 状态 | 2026-10-22 / 昆仑芯功能版本已完成，报告和性能遗留已记录 |
+| 日期 / 状态 | 2026-10-23 / PARTIAL：昆仑芯功能版本已完成，性能门禁尚未闭合 |
 
 ## 1. 环境配置
 
@@ -21,7 +21,8 @@
 
 2026-10-14 环境锁检查为 `OK`。项目 profile 的正式映射下逻辑 `cuda:1`
 指向物理 XPU 2；该卡空闲，黄金、三级和性能已在正式目标卡实测。
-个人容器没有 `pytest`。
+个人容器未安装 `pytest`；2026-10-23 的仓库 CPU 单测在本机临时环境执行，
+结果见 [PR 自查记录](pr-readiness.md)。
 
 ## 2. 算子定义
 
@@ -79,6 +80,13 @@ torch.matmul(a, b) -> torch.Tensor
 实现并保留 `Library` 引用。P800 的张量经 XMLIR 表现为 CUDA；仅注册
 `CUDA` 时，前向可命中但反向走到不适用的 `aten::matmul_backward`。
 op 层同时验证 `torch.matmul`、显式 ATen 调用、CPU 不受影响和实际命中次数。
+
+<!-- tyf-2026-10-23-fix; tyf <tyanfeng@mail.ustc.edu.cn> -->
+
+2026-10-23 将具体 backend 导入移到 `register_a1` 调用时，包导出扫描不再
+要求 Triton。注册闭包绑定前后向实现，保留一阶 autograd 语义；缺少硬件
+依赖时直接报告原异常，不再被脚本路径回退掩盖。包模式与脚本模式均有
+CPU 回归，P800 验证范围与源码身份见 [PR 自查记录](pr-readiness.md)。
 
 ### 3.4 三级实现状态
 

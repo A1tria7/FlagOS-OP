@@ -1,5 +1,10 @@
 # matmul-op: `aten::matmul` A1 实现
 
+<!-- tyf-2026-10-23-fix; tyf <tyanfeng@mail.ustc.edu.cn> -->
+
+当前交付状态为 **PARTIAL**。合并后的 CPU CI、包化导入和 P800 功能回归见
+[PR 自查记录](reports/pr-readiness.md)；历史性能门禁遗留单独保留。
+
 按 `templates/operator/` 开发。需求是 FP32/FP16/BF16 的向量、矩阵、批量及广播 matmul，前向和左右输入一阶反向分别验证。昆仑芯 P800 锁定镜像个人容器已在正式物理 XPU 2 完成黄金和三级功能测试，并建立 144 条性能基线；独立复测也已补齐到 144 条，门禁保留 4 FAIL / 4 WARN（均为原生路径）。2026-10-14 确认本阶段应用层以小型 framework 为准，真实模型及 tiny vLLM 不在本阶段范围。
 
 ## 一页看全
