@@ -1,0 +1,264 @@
+# ops/README.md 的唯一事实来源。
+#
+# Rules:
+# - 只登记已交付证据；不要把未来移植写成已完成。
+# - 规划中的厂商只放在 platform_families；测试和报告合入后再加入算子条目。
+# - 修改本文件后运行 scripts/build_ops_index.py。
+
+schema: 1
+updated: 2026-10-14
+
+target_scope:
+  vendor_family_count: 6
+  interpretation: 目标范围是六个厂商平台家族；当前仓库是增量子集，不是完整矩阵。
+
+platform_families:
+  ascend:
+    display_name: 华为昇腾
+    status: partial
+    current_profiles: [ascend910]
+    roadmap_note: 当前集中在注意力和 embedding 算子。
+  cambricon:
+    display_name: 寒武纪
+    status: partial
+    current_profiles: [cambricon, mlu590]
+    roadmap_note: 覆盖注意力、embedding 和基础 ATen 算子族。
+  kunlunxin:
+    display_name: 昆仑芯
+    status: partial
+    current_profiles: [p800-kunlunxin, p800-kunlunxin-gems5]
+    roadmap_note: 覆盖当前 P800 XMLIR 栈；含 FlagGems 5.0 复测 profile。
+  thead:
+    display_name: 平头哥
+    status: planned
+    current_profiles: []
+    roadmap_note: 首个算子交付时补充 profile 与命名。
+  enflame:
+    display_name: 燧原 GCU
+    status: planned
+    current_profiles: []
+    known_variants: [GCU300, GCU400, GCU410]
+    roadmap_note: 支持落地后记录型号差异。
+  biren:
+    display_name: 壁仞
+    status: planned
+    current_profiles: []
+    roadmap_note: 首个算子交付时补充 profile 与命名。
+
+operator_groups:
+  core:
+    title: 核心多平台算子
+    kind: core
+    rank: 1
+    description: >-
+      覆盖注意力、私有 math 后端和 embedding，具备跨平台交付证据。
+  layout-copy:
+    title: 布局、复制与类型转换
+    kind: foundation
+    rank: 2
+    description: 覆盖张量布局、存储、广播和类型转换语义，用于验证执行链路和注册链路。
+  random-autograd:
+    title: 随机与 autograd 语义
+    kind: foundation
+    rank: 3
+    description: 覆盖随机分支和 detach 语义，用于验证非纯逐元素行为和 autograd 层语义。
+  allocation-metadata:
+    title: 分配与元数据
+    kind: foundation
+    rank: 4
+    description: 覆盖分配、stride、未初始化内存和 dtype 提升语义；这类算子以元数据判卷。
+  host-scalar:
+    title: Host 标量
+    kind: foundation
+    rank: 5
+    description: 覆盖单元素 tensor 转 Python 标量的路径，包括公开 item API 底层的私有 ATen 原语。
+
+operators:
+  - name: sdpa
+    directory: sdpa
+    group: core
+    purpose: 标准 scaled-dot-product attention 前向路径。
+    key_result: 三平台黄金覆盖 397/397。
+    platforms:
+      ascend:
+        profiles: [ascend910]
+        implementation: Triton
+      kunlunxin:
+        profiles: [p800-kunlunxin]
+        implementation: 厂商 efficient attention 委托
+      cambricon:
+        profiles: [mlu590]
+        implementation: TMO / fused overrideable 委托
+
+  - name: sdpa_math
+    directory: sdpa_math
+    group: core
+    purpose: 私有 SDPA math 后端，同时返回完整概率图。
+    key_result: 四份实现通过同一组 175 例黄金数据。
+    platforms:
+      ascend:
+        profiles: [ascend910]
+        implementation: Triton exact-P 路径
+      kunlunxin:
+        profiles: [p800-kunlunxin]
+        implementation: vendor O/LSE 加 exact-P 重建
+
+  - name: embedding
+    directory: embedding
+    group: core
+    purpose: 稠密 embedding 前向和 dense backward。
+    key_result: 已在两个当前厂商平台交付；MLU 侧具备逐位覆盖，Ascend 结果保留为历史实验。
+    platforms:
+      kunlunxin:
+        profiles: [p800-kunlunxin]
+        implementation: 原生 row-gather 与反向补偿
+      cambricon:
+        profiles: [cambricon]
+        implementation: 原生 index_select 与 embedding_backward 委托
+
+  - name: type_as
+    directory: type_as
+    group: layout-copy
+    purpose: 把 tensor 转换到另一个 tensor 的 dtype，并留在原设备。
+    route: A1 · Triton
+    key_result: 黄金 111/111，结果逐位一致。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: clone
+    directory: clone
+    group: layout-copy
+    purpose: 复制 tensor 到独立存储。
+    route: A1 · Triton
+    key_result: 黄金 48/48；op 层测试覆盖包态执行。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: contiguous
+    directory: contiguous
+    group: layout-copy
+    purpose: 返回连续存储；输入本身连续时保持别名。
+    route: A1 · Triton
+    key_result: 黄金 114/114；转置路径使用 2D swizzle 调度。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: copy_
+    directory: copy_
+    group: layout-copy
+    purpose: 写入已有 tensor，支持布局和广播。
+    route: A1 · Triton
+    key_result: 黄金 78/78。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: dropout
+    directory: dropout
+    group: random-autograd
+    purpose: 验证随机 dropout 语义和统计行为。
+    route: A1 · Triton
+    key_result: 黄金 189/189。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: detach
+    directory: detach
+    group: random-autograd
+    purpose: 返回共享存储的非原地 detach 视图。
+    route: A1 · torch
+    key_result: 黄金 36/36。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: detach_
+    directory: detach_
+    group: random-autograd
+    purpose: 在基础算子族中保留原地 detach 语义。
+    route: experimental · torch
+    key_result: 按设计不可 A1 注册，保持 NotImplementedError。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: empty_like
+    directory: empty_like
+    group: allocation-metadata
+    purpose: 按另一个 tensor 的元数据分配未初始化 tensor。
+    route: A1 · torch
+    key_result: 元数据黄金 168/168。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: empty
+    directory: empty
+    group: allocation-metadata
+    purpose: 按 size 分配未初始化 tensor。
+    route: experimental · torch
+    key_result: 不注册，避免与 empty_strided 递归；元数据黄金 48/48。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: empty_strided
+    directory: empty_strided
+    group: allocation-metadata
+    purpose: 按显式 size 和 stride 分配未初始化 tensor。
+    route: A1 · torch
+    key_result: 元数据黄金 30/30。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: result_type
+    directory: result_type
+    group: allocation-metadata
+    purpose: 计算两个输入的 PyTorch dtype 提升结果。
+    route: experimental · torch
+    key_result: 纯元数据函数；按设计不可 A1 注册。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: item
+    directory: item
+    group: host-scalar
+    purpose: 把单元素 tensor 转换为 Python 标量。
+    route: A1 · torch
+    key_result: 黄金 36/36。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+  - name: _local_scalar_dense
+    directory: _local_scalar_dense
+    group: host-scalar
+    purpose: 覆盖 item 底层的稠密标量私有原语。
+    route: A1 · torch
+    key_result: 黄金 36/36。
+    platforms:
+      cambricon:
+        profiles: [cambricon]
+
+registration_contracts:
+  cambricon-foundation:
+    title: MLU 基础算子注册契约
+    scope: Cambricon MLU 上的基础 ATen 算子族。
+    signature:
+      dispatch_key: AutogradPrivateUse1
+      counter: dict | None
+      platform: 显式 platform 名称
+    canonical_key: AutogradPrivateUse1
+    compatibility_key: PrivateUse1
+    registerable_count: 10
+    non_registerable_operators: [empty, detach_, result_type]
+    notes:
+      - generic Autograd 不作为单平台默认映射。
+      - 可注册实现的导入顺序为包态优先、单算子脚本态 fallback。
+      - clone 在 op 层测试中保留包态实际执行代表用例。

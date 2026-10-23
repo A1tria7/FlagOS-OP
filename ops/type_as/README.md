@@ -9,7 +9,7 @@
 | 项 | 值 |
 |---|---|
 | 宿主 | 标准 aten 算子（`torch.Tensor.type_as`） |
-| 路线 | A1：`torch.library.Library("aten","IMPL").impl("type_as", fn, "PrivateUse1")` |
+| 路线 | A1：`register_a1(dispatch_key="AutogradPrivateUse1", counter=None, platform=None)`；兼容 `PrivateUse1` |
 | 设备 | `cambricon`（MLU590-M9，PrivateUse1=mlu），profile 见 [configs/devices/cambricon.yaml](../../configs/devices/cambricon.yaml) |
 | 语义 | `out = self.to(other.dtype)`，留在 `self.device`；同 dtype 返回 `self` |
 
@@ -32,7 +32,7 @@ python3 script/bench_perf.py --device mlu --impl triton
 
 ```
 1/3 算子库层 PASS  {'ok': True, 'max_err': 0.0, ...}
-2/3 框架层   PASS  {'ok': True, 'registered': 'aten::type_as@PrivateUse1', ...}
+2/3 框架层   PASS  {'ok': True, 'registered': 'aten::type_as@AutogradPrivateUse1（兼容 PrivateUse1）', ...}
 3/3 应用层   PASS  {'ok': True, 'calls': 1, 'output_match': True, ...}
 ```
 
@@ -46,5 +46,22 @@ python3 script/bench_perf.py --device mlu --impl triton
    triton 命名空间重复注册）；已在 `common/device.py` 处理。
 5. 本机未装 vLLM，应用层用等价 torch API 的**子进程**验证（注册不跨进程
    传播这一核心难点仍被覆盖），vLLM 到位后替换 `_app_child` 即可。
+
+## 注册契约（2026-10-12）
+
+`register_a1` 统一支持 `counter` 与显式 `platform`：
+
+```python
+register_a1(
+    dispatch_key="AutogradPrivateUse1",
+    counter={"n": 0},
+    platform="cambricon",
+)
+```
+
+- canonical key：`AutogradPrivateUse1`
+- 兼容旧 profile / 脚本态 key：`PrivateUse1`
+- 实现导入：包态优先，单算子脚本态 fallback
+- 包入口：`from ops.type_as import register_a1`
 
 详见 [REPORT.md](REPORT.md) 与 [reports/](reports/)。

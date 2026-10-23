@@ -60,10 +60,15 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
    `python3 script/gen_golden.py --device cpu`——黄金先行，任何实现
    出来就有判卷标准
 3. 实现三级 kernel 中需要的级别，
-   `python3 test/kernel_level.py --device <profile>` 全绿；
+   `python3 test/kernel_level.py <profile>` 全绿（该脚本接收位置参数）；
    三层就绪后 `python3 example.py <profile>` 一键跑完
 4. `python3 script/check_accuracy.py --impl <级别> --device <profile>` 过黄金
-5. 选路线（`register.py` 三选一）→ `test/op_level.py` → `test/framework_level.py`
+5. 选路线（`register.py` 三选一）后，先用本算子目录的
+   `python3 example.py <profile>` 运行三层一键编排。
+   `test/op_level.py` 和 `test/framework_level.py` 通过 `run(profile)` 被
+   `example.py` 加载，没有独立 CLI。仓库根目录 `run.py` 只运行中央
+   route 教学矩阵，不会自动发现 `ops/<新算子>/test/*`；若要纳入中央矩阵，
+   还需显式接入对应 route dispatcher/registry。
 6. `script/bench_perf.py` 看性能；把 `example.py` 的 `perf_cases` 登记
    进 `common/perf_registry.py`，进回归门禁
 7. 填交付报告四件套（REPORT + development + test-report + 分册）；
@@ -118,6 +123,8 @@ grep -rl my_op . | xargs sed -i 's/my_op/<你的算子名>/g'
 - [ ] 三层测试: test/{kernel,op,framework}_level.py 全绿
 - [ ] 性能对照: script/bench_perf.py（native 参照必备）+ reports/ 四件套
 - [ ] 黄金: goldendata/ + script/check_accuracy.py 全过
+- [ ] 算子目录: `ops/catalog.yaml` 已登记，且
+      `python3 scripts/build_ops_index.py --check` 通过
 - [ ] 包化回归: `ops/test_packaging.py` 全算子导入扫描通过
 - [ ] 多平台时: PLATFORM.md（绑定清单）+ MERGE.md（七步流程）
 - [ ] 署名: 改动处 `wt-YYYY-MM-DD-fix` + `# wt <邮箱>`，commit 作者一致

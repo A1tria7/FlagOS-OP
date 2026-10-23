@@ -1,11 +1,16 @@
 # 算子开发报告: type_as
 
+> **环境口径**：本报告记录 2026-09-18 的历史交付快照（Python 3.10.20、torch 2.7.1、torch_mlu 1.29.2、Triton 3.2.0）。当前复验环境与平台支持范围以 [软硬件环境版本汇总](../../../docs/environments.md)、[算子目录](../../../ops/README.md) 和当前 `REPORT.md` 为准；报告中的 `PrivateUse1` 结果属于兼容性记录，当前 canonical key 为 `AutogradPrivateUse1`。
+
+
 | 项 | 值 |
 |---|---|
 | 算子名称 | `type_as` |
 | 实现路线 / 开发级别 | **A1** torch 算子替换 / **Triton 级**（+ torch 级对照） |
 | 目标设备 | `cambricon`（Cambricon MLU590-M9） |
 | 日期 / 状态 | 2026-09-18 / 定稿 |
+
+> **2026-10-12 维护记录**：`register_a1` 已升级为 `counter + platform` 契约；canonical key 为 `AutogradPrivateUse1`，历史 `PrivateUse1` 结论保留为兼容 key。实现导入已改为包态优先、单算子脚本态 fallback。见 PR #25。
 
 ## 1. 环境配置
 
@@ -166,7 +171,7 @@ Library 对象保持全局引用；调用计数用于框架层跨进程验证（
 
 ### 结论
 
-`type_as` 三层全绿、111/111 黄金通过、精度位级一致、哨兵通过、
+`type_as` 适用层验证通过（C1 等价 torch API）、111/111 黄金通过、精度位级一致、哨兵通过、
 应用层输出逐位一致。满足 [Must 清单](../../../docs/acceptance.md#levels)；
 性能略慢于原生 9%，明显快于 FlagGems `to_copy`。
 

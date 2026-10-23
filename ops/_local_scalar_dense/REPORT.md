@@ -4,9 +4,9 @@
 |---|---|
 | 算子名称 | `_local_scalar_dense`（host 标量类） |
 | 语义 | [reference.py](reference.py)：item 的底层原语：单元素稠密张量 → host 标量 |
-| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu / PrivateUse1） |
+| 硬件平台 | **1 个**：Cambricon MLU590（profile `cambricon`，torch_mlu；A1 canonical `AutogradPrivateUse1`，兼容 `PrivateUse1`） |
 | 目标设备 / 路线 | `cambricon`（MLU590-M9）/ **A1** |
-| 日期 / 状态 | 2026-09-18 / 定稿 |
+| 日期 / 状态 | 2026-09-18 定稿 / 2026-10-12 注册契约同步 |
 
 ## 实现矩阵（三级）
 
@@ -27,9 +27,18 @@
 | 黄金 | `script/` | ✅ 36/36 |
 | 性能 | 采样 | ✅ 0.0965ms |
 
+## 2026-10-12 注册契约同步
+
+- `register_a1` 支持 `counter["n"]` 拦截计数与显式 `platform`。
+- canonical key 为 `AutogradPrivateUse1`，`PrivateUse1` 作为旧 profile /
+  单算子脚本态兼容 key。
+- `_local_scalar_dense` 的实现导入为包态优先、脚本态 fallback，包入口使用
+  `from ops._local_scalar_dense import register_a1`。
+- PR #25 聚合复验覆盖 MLU 基础算子契约与代表性真实 vLLM A1 注入；本算子目录的应用层仍是等价 torch API，不能据此宣称本算子已由真实 vLLM 单独消费。
+
 ## 结论
 
-三层全绿；标量值相等 + Python 类型 + 多元素报错。无 Triton/硬件级（该类算子固有）。
+适用层验证通过（C1 等价 torch API）；标量值相等 + Python 类型 + 多元素报错。无 Triton/硬件级（该类算子固有）。
 
 ## 交付物
 

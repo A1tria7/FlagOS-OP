@@ -1,11 +1,16 @@
 # 算子开发报告: clone
 
+> **环境口径**：本报告记录 2026-09-18 的历史交付快照（Python 3.10.20、torch 2.7.1、torch_mlu 1.29.2、Triton 3.2.0）。当前复验环境与平台支持范围以 [软硬件环境版本汇总](../../../docs/environments.md)、[算子目录](../../../ops/README.md) 和当前 `REPORT.md` 为准；报告中的 `PrivateUse1` 结果属于兼容性记录，当前 canonical key 为 `AutogradPrivateUse1`。
+
+
 | 项 | 值 |
 |---|---|
 | 算子名称 | `clone` |
 | 实现路线 / 开发级别 | **A1** torch 算子替换 / **Triton 级**（+ torch 级对照） |
 | 目标设备 | `cambricon`（Cambricon MLU590-M9） |
 | 日期 / 状态 | 2026-09-18 / 定稿 |
+
+> **2026-10-12 维护记录**：`register_a1` 已升级为 `counter + platform` 契约；canonical key 为 `AutogradPrivateUse1`，历史 `PrivateUse1` 结论保留为兼容 key。实现导入已改为包态优先、单算子脚本态 fallback。见 PR #25。
 
 ## 1. 环境配置
 
@@ -88,7 +93,7 @@ FlagGems 无 `clone` 算子，无第三方可比。自研与原生基本持平�
 
 ## 7. 结论与后续
 
-三层全绿，48/48 黄金，精度位级一致、存储独立，性能与原生持平。
+适用层验证通过（C1 等价 torch API），48/48 黄金，精度位级一致、存储独立，性能与原生持平。
 后续: 安装 vLLM 后切真实 harness；如需可尝试大块向量化进一步逼近带宽峰值。
 
 ## 附录: 复现命令

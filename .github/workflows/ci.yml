@@ -6,9 +6,22 @@ on:
   pull_request:
 
 jobs:
-  # wt 2026-10-07-fix 新增 packaging 门: 算子包化回归（CPU 可跑部分）
-  # ——全算子 __init__.py 导入扫描; NPU 消费段在本机跑, CI 里跳过。
-  # # wt <wangt635@ustc.edu.cn>
+  ops-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: 安装 CPU 依赖
+        run: pip install pyyaml -q
+      - name: 算子目录一致性检查
+        run: python3 scripts/build_ops_index.py --check
+      - name: 环境版本汇总一致性检查
+        run: python3 scripts/build_env_index.py --check
+      - name: 基座镜像索引一致性检查
+        run: python3 scripts/build_base_image_index.py --check
+
   ops-packaging:
     runs-on: ubuntu-latest
     steps:
@@ -20,7 +33,7 @@ jobs:
         run: |
           pip install pyyaml -q
           pip install torch --index-url https://download.pytorch.org/whl/cpu -q
-      - name: 算子包化导入扫描（16 目录）
+      - name: 算子包化导入扫描
         run: |
           python3 - <<'EOF'
           import importlib, pathlib, sys
@@ -36,7 +49,8 @@ jobs:
               except Exception as e:
                   bad.append(f'{d.name}: {type(e).__name__}: {e}')
           if bad:
-              print('\n'.join(bad)); sys.exit(1)
+              print('\n'.join(bad))
+              sys.exit(1)
           print(f'ops-packaging: {len(dirs)}/{len(dirs)} 目录导入+导出 OK')
           EOF
 
@@ -51,8 +65,8 @@ jobs:
         run: |
           pip install pytest pyyaml -q
           pip install torch --index-url https://download.pytorch.org/whl/cpu -q
-      - name: 单元测试（无 GPU）
-        run: python -m pytest tests/unit -q
+      - name: 单元测试
+        run: python3 -m pytest tests/unit -q
 
   docs-and-syntax:
     runs-on: ubuntu-latest
@@ -67,12 +81,118 @@ jobs:
           errs = []
           anchor_cache = {}
 
-          def anchors_of(p):
-              k = str(p)
-              if k not in anchor_cache:
-                  text = p.read_text(encoding='utf-8', errors='replace')
-                  hs = re.findall(r'^#{1,6}\s+(.*)$', text, re.M)
-                  anchor_cache[k] = {
-                      re.sub(r'[^\w\u4e00-\u9fff-]', '', h.strip().lower().replace(' ', '-'))
-                      for h in hs}
-              return anchor_cache[k]
+          def anchors_of(path):
+              key = str(path)
+              if key not in anchor_cache:
+                  try:
+                      text = path.read_text(encoding='utf-8', errors='replace')
+                      anchor_cache[key] = set(re.findall(
+                          r'<a id="([^"]+)"', text
+                      ))
+                  except Exception:
+                      anchor_cache[key] = set()
+              return anchor_cache[key]
+
+          for md in root.rglob('*.md'):
+              if '.git' in str(md):
+                  continue
+              raw = md.read_text(encoding='utf-8', errors='replace')
+              text = re.sub(r'```.*?```', '', raw, flags=re.S)
+              for match in re.finditer(
+                  r'\[([^\]]*)\]\(([^)#\s]+)(?:#([^)\s]+))?\)', text
+              ):
+                  target, anchor = match.group(2), match.group(3)
+                  if target.startswith(('http', 'mailto')):
+                      continue
+                  target_path = (md.parent / target).resolve()
+                  if not target_path.exists():
+                      errs.append(f'{md}: -> {target}')
+                  elif anchor and anchor not in anchors_of(target_path):
+                      errs.append(f'{md}: #{anchor} in {target}')
+
+          print(f'检查完成: {len(errs)} 个错误')
+          for error in errs:
+              print(f' - {error}')
+          sys.exit(1 if errs else 0)
+          EOF
+
+      - name: Python 语法检查
+        run: |
+          python3 - <<'EOF'
+          import ast, pathlib, sys
+          fails = []
+          for path in pathlib.Path('.').rglob('*.py'):
+              if '.git' in str(path):
+                  continue
+              try:
+                  ast.parse(path.read_text(), filename=str(path))
+              except SyntaxError as exc:
+                  fails.append(f'{path}: {exc}')
+          if fails:
+              for failure in fails:
+                  print(f' - {failure}')
+              sys.exit(1)
+          print('Python 语法检查通过')
+          EOF
+
+      - name: YAML 配置检查
+        run: |
+          pip install pyyaml -q
+          python3 - <<'EOF'
+          import glob, sys, yaml
+          fails = []
+          files = (
+              glob.glob('configs/devices/*.yaml')
+              + glob.glob('configs/env/*.yaml')
+              + glob.glob('configs/images/*.yaml')
+              + glob.glob('inputs/*.yaml')
+              + ['.github/workflows/ci.yml', 'ops/catalog.yaml']
+          )
+          for name in files:
+              try:
+                  with open(name, encoding='utf-8') as handle:
+                      yaml.safe_load(handle)
+              except Exception as exc:
+                  fails.append(f'{name}: {exc}')
+          if fails:
+              for failure in fails:
+                  print(f' - {failure}')
+              sys.exit(1)
+          print('YAML 检查通过')
+          EOF
+
+      - name: Intake manifest 契约校验
+        run: python3 scripts/intake_validate.py --validate-only
+
+      - name: 性能基线结构检查
+        run: |
+          python3 - <<'EOF'
+          import glob, json, sys
+          fails = []
+          files = glob.glob('perf/baselines/*.json') + [
+              'intake/manifest.schema.json'
+          ]
+          for name in files:
+              try:
+                  with open(name, encoding='utf-8') as handle:
+                      data = json.load(handle)
+              except Exception as exc:
+                  fails.append(f'{name}: {exc}')
+                  continue
+              if name.startswith('perf/'):
+                  required = (
+                      'schema', 'device', 'created_at', 'updated_at',
+                      'git_commit', 'env_fingerprint', 'cases'
+                  )
+                  for key in required:
+                      if key not in data:
+                          fails.append(f'{name}: 缺字段 {key}')
+                  for case_id, case in data.get('cases', {}).items():
+                      if 'latency_ms' not in case.get('metrics', {}):
+                          fails.append(f'{name}: {case_id} 缺 metrics.latency_ms')
+          if fails:
+              for failure in fails:
+                  print(f' - {failure}')
+              sys.exit(1)
+          print('性能基线结构检查通过')
+          EOF
