@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import math
-import os
 from functools import lru_cache
 
 import torch
@@ -20,7 +19,11 @@ def _runtime_vendor() -> str:
     return DeviceDetector().vendor_name
 
 
-@triton.jit
+# Keep K in the runtime signature. P800's default BF16 lowering loses the
+# masked K tail when K=1 is specialized: DMA loads one lane but MMA consumes
+# 32, including stale SRAM. Dynamic K preserves the DS/MMA reduction mask.
+# See reports/k1_root_cause.md for the reproducer and emitted IR evidence.
+@triton.jit(do_not_specialize=["K"])
 def _matmul_kernel(A, B, C, M, N, K,
                    sab, sam, sak, sbb, sbk, sbn, scb, scm, scn,
                    BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
@@ -47,48 +50,6 @@ def _matmul_kernel(A, B, C, M, N, K,
              mask=(rows[:, None] < M) & (cols[None, :] < N))
 
 
-@triton.jit
-def _matmul_outer_kernel(A, B, C,
-                         sab, sam, sak, sbb, sbk, sbn, scb, scm, scn,
-                         M: tl.constexpr, N: tl.constexpr, K: tl.constexpr,
-                         BM: tl.constexpr, BN: tl.constexpr):
-    tile = tl.program_id(0)
-    batch = tl.program_id(1)
-    tiles_n = tl.cdiv(N, BN)
-    rows = (tile // tiles_n) * BM + tl.arange(0, BM)
-    cols = (tile % tiles_n) * BN + tl.arange(0, BN)
-    acc = tl.zeros((BM, BN), dtype=tl.float32)
-
-    for k in range(K):
-        a = tl.load(A + batch * sab + rows * sam + k * sak,
-                    mask=rows < M, other=0).to(tl.float32)
-        b = tl.load(B + batch * sbb + k * sbk + cols * sbn,
-                    mask=cols < N, other=0).to(tl.float32)
-        acc += a[:, None] * b[None, :]
-
-    tl.store(C + batch * scb + rows[:, None] * scm + cols[None, :] * scn,
-             acc.to(C.dtype.element_ty),
-             mask=(rows[:, None] < M) & (cols[None, :] < N))
-
-
-@triton.jit
-def _matmul_vector_kernel(A, B, C, M, N, K,
-                          sab, sam, sak, sbb, sbk, sbn, scb, scm, scn,
-                          BK: tl.constexpr):
-    index = tl.program_id(0)
-    batch = tl.program_id(1)
-    row = index // N
-    col = index % N
-    ks = tl.arange(0, BK)
-    a = tl.load(A + batch * sab + row * sam + ks * sak,
-                mask=ks < K, other=0).to(tl.float32)
-    b = tl.load(B + batch * sbb + ks * sbk + col * sbn,
-                mask=ks < K, other=0).to(tl.float32)
-    result = tl.sum(a * b, 0)
-    tl.store(C + batch * scb + row * scm + col * scn,
-             result.to(C.dtype.element_ty))
-
-
 def matmul_triton(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     if a.device != b.device or a.dtype != b.dtype:
         raise RuntimeError("matmul inputs must have the same device and dtype")
@@ -109,11 +70,7 @@ def matmul_triton(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     left = left.reshape(batches, m, k)
     right = right.reshape(batches, k, n)
     out = torch.empty((batches, m, n), device=a.device, dtype=a.dtype)
-    algorithm = os.environ.get("FLAGOS_MATMUL_TRITON_ALGORITHM", "dot")
-    if algorithm not in ("dot", "outer"):
-        raise ValueError(f"unsupported Triton matmul algorithm: {algorithm}")
-    kunlunxin_dot = algorithm == "dot" and _runtime_vendor() == "kunlunxin"
-    if kunlunxin_dot:
+    if _runtime_vendor() == "kunlunxin":
         # The locked P800 stack has produced wrong results for expanded matrix axes.
         if any(size > 1 and stride == 0 for size, stride in
                zip(left.shape[-2:], left.stride()[-2:])):
@@ -127,26 +84,11 @@ def matmul_triton(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     from flag_gems.runtime import torch_device_fn
 
     with torch_device_fn.device(a.device):
-        # Keep the observed P800 BF16 K=1 failure off the dot path.
-        if algorithm == "dot" and not (kunlunxin_dot and k == 1 and
-                                       a.dtype == torch.bfloat16):
-            _matmul_kernel[grid](
-                left, right, out, m, n, k,
-                *left.stride(), *right.stride(), *out.stride(),
-                BM=bm, BN=bn, BK=bk, num_warps=4,
-            )
-        elif m <= 2 or n <= 2:
-            _matmul_vector_kernel[(m * n, batches)](
-                left, right, out, m, n, k,
-                *left.stride(), *right.stride(), *out.stride(),
-                BK=triton.next_power_of_2(k), num_warps=4,
-            )
-        else:
-            _matmul_outer_kernel[grid](
-                left, right, out,
-                *left.stride(), *right.stride(), *out.stride(),
-                M=m, N=n, K=k, BM=bm, BN=bn, num_warps=4,
-            )
+        _matmul_kernel[grid](
+            left, right, out, m, n, k,
+            *left.stride(), *right.stride(), *out.stride(),
+            BM=bm, BN=bn, BK=bk, num_warps=4,
+        )
     return restore_output(out.reshape(out_shape), a_vector, b_vector)
 
 

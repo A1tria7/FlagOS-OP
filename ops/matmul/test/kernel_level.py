@@ -19,6 +19,56 @@ def _error(actual, expected):
     return diff.max().item() / scale if scale else diff.max().item()
 
 
+def _check_k1_sram_tail(profile):
+    """A preceding FP32 dot must not contaminate BF16 masked K lanes."""
+    import torch
+    import triton
+    from flag_gems.runtime import torch_device_fn
+    from kernel.triton_level import _matmul_kernel
+
+    # Allocate everything first; launch prime -> target without an intervening
+    # tensor operation that might overwrite the SRAM and hide the regression.
+    primes = [
+        (torch.full((128, 32), value, device=profile.torch_device),
+         torch.full((32, 128), value, device=profile.torch_device),
+         torch.empty((128, 128), device=profile.torch_device))
+        for value in (0.0, 1.0, 3.0)
+    ]
+    targets = [
+        (k, value,
+         torch.full((37, k), value, dtype=torch.bfloat16, device=profile.torch_device),
+         torch.full((k, 65), value, dtype=torch.bfloat16, device=profile.torch_device),
+         torch.empty((37, 65), dtype=torch.bfloat16, device=profile.torch_device))
+        for k in (1, 2) for value in (0.0, 1.0)
+    ]
+
+    def launch(a, b, out):
+        m, k = a.shape
+        n = b.shape[1]
+        _matmul_kernel[(triton.cdiv(m, 32) * triton.cdiv(n, 32), 1)](
+            a, b, out, m, n, k, 0, *a.stride(), 0, *b.stride(),
+            0, *out.stride(), BM=32, BN=32, BK=32, num_warps=4)
+
+    count = 0
+    with torch_device_fn.device(profile.torch_device):
+        for prime in primes:
+            launch(*prime)
+        for _, _, a, b, out in targets:
+            launch(a, b, out)
+        targets[-1][-1].cpu()
+        for prime in primes:
+            for k, value, a, b, out in targets:
+                for _ in range(3):
+                    launch(*prime)
+                    launch(a, b, out)
+                    got = out.float().cpu()
+                    assert torch.all(got == k * value * value).item(), (
+                        "BF16 masked K tail contains preceding SRAM values", k, value,
+                        (got - k * value * value).abs().max().item())
+                    count += 1
+    print(f"kernel: BF16 K=1/2 SRAM contamination regression {count}/{count} PASS")
+
+
 def run(profile):
     import torch
     import yaml
@@ -26,6 +76,9 @@ def run(profile):
     from kernel.triton_level import matmul_backward_triton, matmul_triton
     from reference import matmul_backward_reference, matmul_reference
     from script.gen_golden import make_case
+
+    if profile.vendor == "kunlunxin":
+        _check_k1_sram_tail(profile)
 
     spec = yaml.safe_load((OP_DIR / "goldendata/inputs_spec.yaml").read_text())
     rel_tol = float(spec["tolerance"]["gemm_rel"])

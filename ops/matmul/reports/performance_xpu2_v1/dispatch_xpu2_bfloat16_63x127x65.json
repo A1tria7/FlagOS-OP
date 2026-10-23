@@ -13,25 +13,25 @@
   "rows": [
     {
       "mode": "native",
-      "median_ms": 0.050884,
-      "p20_ms": 0.050259,
-      "p80_ms": 0.054169,
+      "median_ms": 0.053644,
+      "p20_ms": 0.053019,
+      "p80_ms": 0.054709,
       "relative_error": 0.0
     },
     {
       "mode": "direct",
-      "median_ms": 0.105278,
-      "p20_ms": 0.101068,
-      "p80_ms": 0.119737,
+      "median_ms": 0.098593,
+      "p20_ms": 0.095138,
+      "p80_ms": 0.105537,
       "relative_error": 0.005714285714285714
     },
     {
       "mode": "a1",
-      "median_ms": 0.154227,
-      "p20_ms": 0.142068,
-      "p80_ms": 0.193556,
+      "median_ms": 0.129502,
+      "p20_ms": 0.126417,
+      "p80_ms": 0.136057,
       "relative_error": 0.005714285714285714
     }
   ],
-  "a1_minus_direct_ms": 0.048949
+  "a1_minus_direct_ms": 0.030909
 }

@@ -82,33 +82,8 @@ def main() -> int:
 
 
 def perf_cases(profile):
-    from common.perf import PerfCase
-    from ops.matmul.kernel.triton_level import matmul_triton
-    import torch
-
-    def make(fn, shape):
-        def _make(p):
-            batch, m, k, n = shape
-            a = torch.randn(batch, m, k, device=p.torch_device,
-                            dtype=torch.bfloat16) * 0.25
-            b = torch.randn(batch, k, n, device=p.torch_device,
-                            dtype=torch.bfloat16) * 0.25
-            # The scalar readback forces completion on backends without a
-            # working torch.cuda.synchronize implementation.
-            return lambda: fn(a, b).reshape(-1)[0].item()
-        return _make
-
-    cases = []
-    for shape in ((1, 63, 127, 65), (1, 128, 256, 192)):
-        batch, m, k, n = shape
-        flops = 2 * batch * m * k * n
-        for name, fn in (("triton", matmul_triton), ("native", torch.matmul)):
-            cases.append(PerfCase(
-                f"ops.matmul.bf16.{m}x{k}x{n}.{name}", group="ops",
-                level="kernel", make_fn=make(fn, shape),
-                derived=lambda ms, flops=flops: {"GFLOPS": flops / ms / 1e6},
-            ))
-    return cases
+    from ops.matmul.script.perf_common import perf_cases as collect
+    return collect(profile)
 
 
 if __name__ == "__main__":

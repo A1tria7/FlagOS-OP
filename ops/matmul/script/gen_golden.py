@@ -12,8 +12,8 @@ import torch
 import yaml
 
 HERE = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(HERE))
-from reference import matmul_backward_reference, matmul_reference  # noqa: E402
+sys.path.insert(0, str(HERE.parent.parent))
+from ops.matmul.reference import matmul_backward_reference, matmul_reference  # noqa: E402
 
 
 def _input(shape, generator, layout, dtype, scale):
